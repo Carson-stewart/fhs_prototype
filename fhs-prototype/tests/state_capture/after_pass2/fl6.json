@@ -1,0 +1,88 @@
+{
+  "label": "fl6",
+  "scores": {
+    "fhs": null,
+    "fss": null,
+    "frs": null
+  },
+  "frs_band": null,
+  "plan": {
+    "phases_count": 1,
+    "plan_phases": [
+      {
+        "months": "1\u20136",
+        "dominant": "Retirement savings",
+        "amount": 1800.0,
+        "description": "Months 1\u20136: Redirect $1,800/month to retirement savings + $750/month to investments",
+        "secondary": "Investment",
+        "secondary_amount": 750.0
+      }
+    ],
+    "allocation_plan_keys": [
+      "list"
+    ],
+    "state_trajectory_len": 6
+  },
+  "optimal_allocation": {
+    "x1_ef_savings": 375.0,
+    "x2_retirement": 1800.0,
+    "x3_hi_debt_paydown": 0.0,
+    "x4_lo_debt_paydown": 0.0,
+    "x5_discretionary": 375.0,
+    "x6_investment": 750.0
+  },
+  "trajectory_unique": [
+    673.1,
+    677.5,
+    681.9,
+    686.2,
+    689.8,
+    691.1,
+    692.4
+  ],
+  "recommendations": [
+    {
+      "shape": "new",
+      "type": "action",
+      "priority": "secondary",
+      "confidence": "high",
+      "title": "Stretch your buffer to cover a longer thin period",
+      "body": "Your recent income has been declining. With about 6.8 months of coverage already, the action is preserving runway, not growing it.",
+      "next_move": "Trim discretionary by $110/month and direct it to liquid savings.",
+      "trigger": "trajectory_decline"
+    },
+    {
+      "shape": "legacy",
+      "priority": 1,
+      "impact": "FHS",
+      "action": "Months 1\u20136: Redirect $1,800/month to retirement savings + $750/month to investments",
+      "reason": "Your personalised plan: Months 1\u20136: Redirect $1,800/month to retirement savings + $750/month to investments",
+      "phases_count": 1
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Direct $1,800/month into retirement savings",
+      "reason": "At your age the target for your age is roughly $216,000; you're about 81% behind. Consistent contributions today compound into the next decade.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Add disability insurance to your benefits",
+      "reason": "Disability is a top cause of unplanned income loss; check whether your employer offers it.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 4,
+      "impact": "FRS",
+      "action": "Check in weekly on your spending",
+      "reason": "A weekly look at where your money went is the strongest predictor of momentum \u2014 a few minutes is enough.",
+      "phases_count": 0
+    }
+  ],
+  "recommendations_count": 5
+}

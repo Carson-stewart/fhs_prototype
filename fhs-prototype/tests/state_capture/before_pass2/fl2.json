@@ -1,0 +1,96 @@
+{
+  "label": "fl2",
+  "scores": {
+    "fhs": null,
+    "fss": null,
+    "frs": null
+  },
+  "frs_band": null,
+  "plan": {
+    "phases_count": 1,
+    "plan_phases": [
+      {
+        "months": "1\u20136",
+        "dominant": "Emergency fund",
+        "amount": 975.0,
+        "description": "Months 1\u20136: Build emergency fund \u2014 $975/month"
+      }
+    ],
+    "allocation_plan_keys": [
+      "list"
+    ],
+    "state_trajectory_len": 6
+  },
+  "optimal_allocation": {
+    "x1_ef_savings": 975.0,
+    "x2_retirement": 0.0,
+    "x3_hi_debt_paydown": 0.0,
+    "x4_lo_debt_paydown": 0.0,
+    "x5_discretionary": 325.0,
+    "x6_investment": 0.0
+  },
+  "trajectory_unique": [
+    563.8,
+    581.5,
+    584.0,
+    586.4,
+    588.9,
+    591.4,
+    593.8
+  ],
+  "recommendations": [
+    {
+      "shape": "new",
+      "type": "action",
+      "priority": "secondary",
+      "confidence": "high",
+      "title": "Catch up on your tax reserve",
+      "body": "Your reserve is $1,500 of an estimated $1,950 target. You've started \u2014 staying on plan keeps you ahead of next quarter.",
+      "next_move": "Add $450 before your next quarterly (due in 27 days).",
+      "trigger": "tax_reserve_behind"
+    },
+    {
+      "shape": "new",
+      "type": "action",
+      "priority": "secondary",
+      "confidence": "high",
+      "title": "Build buffer during your stronger months",
+      "body": "Your income runs irregularly with about 40% month-to-month variation. The months you have surplus are how you build buffer for the lean ones.",
+      "next_move": "When income comes in above your typical, redirect the difference to liquid savings before it gets reabsorbed.",
+      "trigger": "volatility_buffer"
+    },
+    {
+      "shape": "legacy",
+      "priority": 1,
+      "impact": "FHS",
+      "action": "Months 1\u20136: Build emergency fund \u2014 $975/month",
+      "reason": "Your personalised plan: Months 1\u20136: Build emergency fund \u2014 $975/month",
+      "phases_count": 1
+    },
+    {
+      "shape": "legacy",
+      "priority": 2,
+      "impact": "FHS",
+      "action": "Save $975/month toward your emergency fund (target $8,400)",
+      "reason": "You currently have 2.9 months of essential expenses saved. Three months is the minimum buffer to absorb income shocks.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Get term life insurance",
+      "reason": "Life coverage is one of five resilience milestones; term policies are inexpensive at younger ages.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Add disability insurance to your benefits",
+      "reason": "Disability is a top cause of unplanned income loss; check whether your employer offers it.",
+      "phases_count": 0
+    }
+  ],
+  "recommendations_count": 6
+}

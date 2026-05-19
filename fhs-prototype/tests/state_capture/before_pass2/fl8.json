@@ -1,0 +1,94 @@
+{
+  "label": "fl8",
+  "scores": {
+    "fhs": null,
+    "fss": null,
+    "frs": null
+  },
+  "frs_band": null,
+  "plan": {
+    "phases_count": 2,
+    "plan_phases": [
+      {
+        "months": "1",
+        "dominant": "HI debt paydown",
+        "amount": 1900.0,
+        "description": "Months 1: Put $1,900/month toward high-interest debt"
+      },
+      {
+        "months": "2\u20136",
+        "dominant": "Retirement savings",
+        "amount": 1080.0,
+        "description": "Months 2\u20136: Redirect $1,080/month to retirement savings + $765/month to emergency fund",
+        "secondary": "Emergency fund",
+        "secondary_amount": 765.0
+      }
+    ],
+    "allocation_plan_keys": [
+      "list"
+    ],
+    "state_trajectory_len": 6
+  },
+  "optimal_allocation": {
+    "x1_ef_savings": 0.0,
+    "x2_retirement": 0.0,
+    "x3_hi_debt_paydown": 1900.0,
+    "x4_lo_debt_paydown": 0.0,
+    "x5_discretionary": 300.0,
+    "x6_investment": 0.0
+  },
+  "trajectory_unique": [
+    569.1,
+    569.7,
+    613.3,
+    618.7,
+    624.1,
+    629.5,
+    634.9
+  ],
+  "recommendations": [
+    {
+      "shape": "new",
+      "type": "action",
+      "priority": "primary",
+      "confidence": "high",
+      "title": "Set aside tax money this week",
+      "body": "Your tax reserve is $400 of an estimated $1,800 target. Your next quarterly is due in 3 days.",
+      "next_move": "Move $1,400 to a tax-reserve account this week.",
+      "trigger": "tax_reserve_uncovered_imminent"
+    },
+    {
+      "shape": "legacy",
+      "priority": 2,
+      "impact": "FHS",
+      "action": "Months 1: Put $1,900/month toward high-interest debt",
+      "reason": "Your personalised plan: Months 1: Put $1,900/month toward high-interest debt \u2192 Months 2\u20136: Redirect $1,080/month to retirement savings + $765/month to emergency fund",
+      "phases_count": 2
+    },
+    {
+      "shape": "legacy",
+      "priority": 2,
+      "impact": "FHS",
+      "action": "Put $1,900/month against your high-interest debt to clear it in ~1 month",
+      "reason": "You carry $2,000 in high-interest balances. Compounding above 15% APR erodes net worth faster than any investment can grow it.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Get term life insurance",
+      "reason": "Life coverage is one of five resilience milestones; term policies are inexpensive at younger ages.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Add disability insurance to your benefits",
+      "reason": "Disability is a top cause of unplanned income loss; check whether your employer offers it.",
+      "phases_count": 0
+    }
+  ],
+  "recommendations_count": 5
+}

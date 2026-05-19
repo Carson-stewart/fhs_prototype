@@ -44,7 +44,9 @@ For full strategic context (mission, vision, values, positioning, revenue model,
 
 **Phase 6 / Pre-Beta Polish Pass 1 complete (May 19 2026):** Four work items shipped against visual-test findings from Freelancer profiles fl1–fl9. WI-1 stretch-coverage template fix (gate on per-user buffer floor instead of universal 3.0; eliminates contradictory negative-dollar and shrinking-target copy on fl2/fl7 while preserving fl4/fl6 trajectory recs and severe-tier coverage rec). WI-2 FRS supplementary copy reconciliation (`frsState()` now branches on FRS band — Strong/Improving/Holding/Declining — rather than the multi-period LP trajectory; eliminates the green-up-arrow-with-declining-pill contradiction on fl4/fl6). WI-3 bundled copy polish (a: tagline branches on FRS direction; b: "1 month/months" pluralization on debt payoff horizon and famine runway; c: snake_case humanization fallback in Plaid review banner with explicit SB/FL field labels added; d: "Track every dollar" reframed to "Check in weekly on your spending"). WI-4 Famine empty-card handling (trajectory chart suppressed when flat; allocation+milestones card suppressed when both surfaces empty). All gates green throughout: 23/23 archetypes, 137/137 mapper, 10/10 scrubber, 30/30 state vocab, 51/51 recs, 87/87 freelancer, 13/13 integration.
 
-**Active:** Pass 2 of 2 pending (fl1 vs fl9 sub-score divergence + plan multi-render unification — explicitly out of scope for Pass 1).
+**Phase 6 / Pre-Beta Polish Pass 2 complete (May 19 2026):** Plan multi-render unification shipped as a single render-layer work item (WI-5). The legacy `engine.generate_recommendations` continues to emit a plan-as-rec card alongside the canonical "Your 6-month plan" card; `static/index.html` now filters that duplicate out at render time by matching the legacy rec's `action` against `d.plan_phases[0].description`. Per-step legacy recs (phases_count==0) that add information beyond the plan (time-to-completion, target dollars) are preserved. fl3 (Famine — no LP plan) unaffected. All 7 gate suites remain green at 23/23 / 137/137 / 10/10 / 30/30 / 51/51 / 87/87 / 13/13. Backend cleanup (stop emitting the duplicate at source) is a future session, not this one — render-layer suppression is reversible if a use case emerges.
+
+**Active:** Phase 6 pre-beta polish complete (Pass 1 + Pass 2). **Next:** fl1/fl9 sub-score divergence diagnostic (Missing coverage 50%/61%, Retirement catch-up 32%/39% — same FL Predictable inputs producing different breakdowns with vs without Plaid).
 
 **Next up:** Phase 5c (Individual W-2 deepening) or Phase 6 (real-data calibration) — strategic decision depending on whether beta data is available. Phase 5d (Startup) inherits the proven layered-extension pattern from Phase 5a + 5b.
 
@@ -56,7 +58,7 @@ For full strategic context (mission, vision, values, positioning, revenue model,
 | **5a** | ✅ Done | Small Business archetype: schema, scoring, mapper, recommendations, full integration. |
 | **5b** | ✅ Done | Freelancer archetype: schema, scoring with FL-FSS contributors, 1099/gig mapper detection, Famine-state recommendations with hand-reviewed copy. 23/23 unified archetype compliance. |
 | 5c / 5d | Pending (next) | Individual W-2 deepening / Startup. Per strategy doc §6.2 reordering. |
-| **6** | 🟡 In progress | Real-data calibration + pre-beta polish. **Pass 1 of pre-beta polish complete** (May 19 2026, see §3 + changelog). Pass 2 pending. Model B weight calibration from real beta data follows. |
+| **6** | 🟡 In progress | Real-data calibration + pre-beta polish. **Pass 1 + Pass 2 of pre-beta polish complete** (May 19 2026, see §3 + changelog). fl1/fl9 sub-score divergence diagnostic next, then Model B weight calibration from real beta data. |
 | **7** | Pending | **(7a) React Native + React Native Web conversion**, **(7b) Production hardening** (Plaid token encryption, debug surface removal, audit logging, data deletion flow) |
 | 8 | Pending | Closed beta launch |
 | 9 | Pending | Public launch on iOS, Android, web simultaneously, including couple/partner mode |
@@ -1877,3 +1879,96 @@ Alternative: proceed directly to Phase 5d Startup if calibration validation isn'
 - WI-3e optional 0%-row collapse (see WI-3 above).
 - Window-scoped state-sharing in WI-4's allocation/milestones suppress should become component-scoped on React Native conversion.
 - The Famine state visual hierarchy redesign (Phase 7a item 16 from Phase 5b closeout) remains the most consequential deferred Famine-related work — Pass 1 only addresses empty surfaces, not the deeper reframing of what a Famine-state screen should look like.
+
+## Phase 6 — Pre-Beta Polish, Pass 2 of 2 (May 19 2026)
+
+**Closed.** Single substantive architectural work item: render-layer unification of the LP plan. No data-layer changes; before/after engine + recs payload is bit-for-bit identical across all 9 captured profiles (fl1–fl9). User-visible delta is the disappearance of the duplicate plan-as-rec card on every profile that ran an LP plan (8 of 9 — all except fl3 Famine which is LP-infeasible and has no plan).
+
+### Pre-flight
+
+- ✅ On branch `phase6/pre-beta-polish-pass2` (created from `main` at commit `dacc1fd` Pass 1).
+- ✅ All 7 gates green at baseline: 23/23 / 137/137 / 10/10 / 30/30 / 51/51 / 87/87 / 13/13.
+- ✅ Programmatic "before" state captured to `tests/state_capture/before_pass2/{fl1..fl9}.json` (capture script at `tests/state_capture/_capture.py`).
+
+### WI-5 — Plan multi-render unification
+
+**Status:** ✅ shipped.
+
+**Problem.** `engine.generate_recommendations` (legacy / numeric-priority rec generator from pre-Phase-5a) emits, when an LP plan exists, a recommendation whose `action` is the first plan phase description verbatim and whose `phases` array carries the full plan_phases list. This rec card renders alongside the canonical "Your 6-month plan" card from `renderPhasePlan()`, producing two visual representations of the same plan. On worst-case profiles (fl8: 5 recs, 2 phases; fl7: 8 recs, 3 phases) the duplication is jarring; on fl4/fl5/fl6 it was less visually loud but mechanically the same emission.
+
+**Programmatic before-state confirmed the pattern is uniform:**
+
+| Profile | Recs (before) | Plan-as-rec to suppress |
+|---|---|---|
+| fl1 | 4 | "Months 1–6: Redirect $1,925/month to retirement savings + $850/month to investments" (phases=1) |
+| fl2 | 6 | "Months 1–6: Build emergency fund · $975/month" (phases=1) |
+| fl3 | 4 | (none — Famine, no LP plan) |
+| fl4 | 5 | "Months 1–6: Redirect $720/month to retirement savings" (phases=1) |
+| fl5 | 4 | "Months 1–6: Redirect $500/month to retirement savings" (phases=1) |
+| fl6 | 5 | "Months 1–6: Redirect $1,800/month..." (phases=1) |
+| fl7 | 8 | "Months 1–2: Redirect $450/month..." (phases=3) |
+| fl8 | 5 | "Months 1: Put $1,900/month toward high-interest debt" (phases=2) |
+| fl9 | 4 | same as fl1 |
+
+**Fix.** Render-layer suppression in `static/index.html`. The "Recommended actions" section was previously rendered as a simple `d.recommendations.map(...).join('')` inside a conditional. Replaced with an IIFE that filters the list before mapping. Suppression rule: a legacy rec is suppressed iff it carries a non-empty `phases` array AND its `action` (trimmed) matches `d.plan_phases[0].description` (trimmed). New-shape recs (those with both `title` and `body`) are never suppressed — they don't carry a `phases` field and their copy shape (calm imperative verb, brand-voice-audited) is not the plan-phase description shape. Per-step legacy recs with `phases_count == 0` are always kept regardless of action overlap; they typically add information (time-to-completion via the engine's months_to_clear branch; dollar targets on EF/savings recs).
+
+**Implementation footprint.** Single edit in `static/index.html` around line 2457. The wrapping conditional `${Array.isArray(d.recommendations) && d.recommendations.length ? ... : ''}` was replaced with an IIFE returning either the section markup or `''`. ~40 lines net, including a long block comment that points future maintainers at the architectural rationale (`§7` registered rule on multi-emission paths is implicit; this isn't a new rule, just an instance of leaving the data layer alone when render-layer filtering is sufficient).
+
+**Render-layer state.** Sets `window.__planDupCount` for diagnostic visibility (how many duplicates were suppressed on the last render). Follows the same `window.__` stopgap pattern introduced in Pass 1's WI-4 (`window.__suppressAllocCard`). Both are flagged for the Phase 7a React Native refactor where they become component-scoped state.
+
+### Acceptance criteria
+
+- [x] **fl8**: exactly ONE plan-related card at HIGH PRIORITY. Top YOUR 6-MONTH PLAN card preserved. MEDIUM PRIORITY "clear it in ~1 month" card preserved (it adds time-to-completion via `months_to_clear` branch in engine.py).
+- [x] **fl2**: plan + duplicate plan rec collapses to a single representation; "Save $975/month toward your emergency fund (target $8,400)" preserved (adds target dollar amount).
+- [x] **fl7**: plan + duplicate plan rec collapses; "Save $325/month toward your emergency fund (target $7,200)" preserved.
+- [x] **fl3 (Famine)**: unchanged. 4 recs → 4 recs. No LP plan, no duplication, no impact.
+- [x] **fl1, fl9**: top YOUR 6-MONTH PLAN card preserved; redundant HIGH PRIORITY plan duplicate suppressed.
+- [x] **fl4, fl5, fl6**: top plan card preserved; redundant plan rec suppressed (brief said "already clean" — programmatic capture showed the same emission existed, just visually quieter; suppression now uniform).
+- [x] **All 7 test suites still green**: 23/23 / 137/137 / 10/10 / 30/30 / 51/51 / 87/87 / 13/13. Data layer untouched by render-only change (verified: before/after JSON capture bit-for-bit identical across all 9 profiles).
+
+### Soft observation (relevant to fl1/fl9 diagnostic — flagged not investigated)
+
+During render-layer work I did NOT diverge to investigate the fl1/fl9 sub-score divergence (Missing coverage 50%/61%, Retirement catch-up 32%/39%). Two render-path observations that might or might not be relevant — flagged for the diagnostic session:
+
+1. **`normalizeResponse` at `static/index.html:2228+`** branches on `d.scores ? ... : ...` — i.e. on response shape. The flat shape (no `d.scores` wrapper) is `/api/score`'s emission; the nested shape with `d.scores` is `/plaid/map`'s wrapping. fl1 and fl9 may pass through different normalizers depending on whether Plaid is connected. If a breakdown field (e.g. missing-coverage component) is keyed differently between the two shapes, the rendered percent could drift even when underlying scores are identical. **Not investigated; just an avenue to check.**
+
+2. The plan-as-rec duplicate suppressed here does NOT carry breakdown values, only the action + phases. So the suppression itself cannot cause a breakdown drift between fl1 and fl9. Both profiles' captured "before" plan_phases are identical (`Months 1–6: Redirect $1,925/month to retirement savings + $850/month to investments` for both). This confirms the divergence is upstream of the renderer — likely in the Plaid mapper → IndividualInput path, or in how Retirement catch-up / Missing coverage are computed when certain inputs are confidence-tagged vs raw. **Not investigated.**
+
+### Backend cleanup recommendation
+
+**Render-layer suppression is a stable long-term solution; backend cleanup is nice-to-have, not required.**
+
+Rationale:
+- The legacy plan-as-rec emission in `engine.generate_recommendations` is a single emission site (single function in `engine.py`) and produces a structurally consistent rec shape (legacy, phases-bearing, action == first_phase_description). The suppression rule matches that shape exactly — there's no ambiguity, no edge case where a non-duplicate gets filtered.
+- The legacy rec generator pre-dates the Phase 5a/5b new-shape contract. It's been the "third recommendation system" coexisting with new-shape SB recs and new-shape FL recs since Phase 5a. Touching it carries regression risk against the Individual archetype (10/10 compliance) that doesn't have new-shape replacements for the generated recs.
+- Phase 7a will rewrite the frontend in React Native + React Native Web. At that point the renderer is rewritten anyway, and the question becomes whether `engine.generate_recommendations` is replaced by new-shape generators for Individual archetype (the underlying refactor the layered-extensions pattern was always heading toward). That's the right time to delete the duplicate emission — not now.
+- The render-layer suppression's runtime cost is negligible (a single `filter()` call per render).
+
+**Recommendation:** leave the backend emission in place. Revisit when Phase 7a's renderer rewrite makes the new-shape migration of `engine.generate_recommendations` the natural next step.
+
+### LOC / file footprint
+
+| File | Lines changed |
+|---|---|
+| `static/index.html` | ~40 (IIFE-wrapping the Recommended actions section + suppression filter) |
+| `tests/state_capture/_capture.py` | new, ~80 lines |
+| `tests/state_capture/before_pass2/*.json` | new, 9 files |
+| `tests/state_capture/after_pass2/*.json` | new, 9 files |
+| `CLAUDE.md` | this changelog entry |
+
+### Items deferred (to Phase 7a or future sessions)
+
+- Backend `engine.generate_recommendations` plan-as-rec emission cleanup (defer to Phase 7a renderer rewrite; render-layer suppression is sufficient until then).
+- `window.__planDupCount` and `window.__suppressAllocCard` consolidation into proper component-scoped state (Phase 7a React Native refactor).
+- fl1/fl9 sub-score divergence diagnostic (out of scope for this pass; dedicated session next).
+
+### Final beta readiness assessment
+
+With Pass 1 and Pass 2 complete, the remaining items between this state and a beta launch are:
+
+1. **fl1/fl9 sub-score divergence diagnostic** — flagged out-of-scope here; dedicated diagnostic session needed before beta.
+2. **Phase 6 calibration against real beta data** — the existing 10-item Phase 6 calibration list (CLAUDE.md Phase 5b.5 closeout). Most thresholds have only been validated against synthetic profiles.
+3. **Phase 7b production hardening** — Plaid token encryption (currently plaintext in SQLite); debug surface removal ("View raw Plaid data"); audit logging; data deletion flow. These are gate-of-shipping items, not beta-blockers per se, but a closed-beta launch with real users requires at least token encryption and the data deletion flow.
+4. **Phase 7a React Native + React Native Web conversion** — strictly speaking Phase 8 (closed beta) could ship on the vanilla frontend; the React Native conversion was sequenced *before* production hardening to keep one codebase from drifting into two. If beta is desktop-web-only, this can technically slip; if beta is mobile, this is on the critical path.
+
+**Strategic read:** the visual polish work (Pass 1 + Pass 2) has cleared the surface defects that would have caused early-beta users to lose confidence in Relius before they got to the next-move surface. The remaining items are infrastructure (7b) and platform reach (7a), not user-experience defects. The system is in materially better shape for beta than it was 48 hours ago.

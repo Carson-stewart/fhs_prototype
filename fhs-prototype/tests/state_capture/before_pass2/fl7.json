@@ -1,0 +1,132 @@
+{
+  "label": "fl7",
+  "scores": {
+    "fhs": null,
+    "fss": null,
+    "frs": null
+  },
+  "frs_band": null,
+  "plan": {
+    "phases_count": 3,
+    "plan_phases": [
+      {
+        "months": "1\u20132",
+        "dominant": "Retirement savings",
+        "amount": 450.0,
+        "description": "Months 1\u20132: Redirect $450/month to retirement savings + $325/month to emergency fund",
+        "secondary": "Emergency fund",
+        "secondary_amount": 325.0
+      },
+      {
+        "months": "3",
+        "dominant": "Emergency fund",
+        "amount": 550.0,
+        "description": "Months 3: Build emergency fund \u2014 $550/month + $225/month to retirement savings",
+        "secondary": "Retirement savings",
+        "secondary_amount": 225.0
+      },
+      {
+        "months": "4\u20136",
+        "dominant": "Retirement savings",
+        "amount": 450.0,
+        "description": "Months 4\u20136: Redirect $450/month to retirement savings + $325/month to emergency fund",
+        "secondary": "Emergency fund",
+        "secondary_amount": 325.0
+      }
+    ],
+    "allocation_plan_keys": [
+      "list"
+    ],
+    "state_trajectory_len": 6
+  },
+  "optimal_allocation": {
+    "x1_ef_savings": 325.0,
+    "x2_retirement": 450.0,
+    "x3_hi_debt_paydown": 0.0,
+    "x4_lo_debt_paydown": 0.0,
+    "x5_discretionary": 225.0,
+    "x6_investment": 0.0
+  },
+  "trajectory_unique": [
+    586.3,
+    590.2,
+    594.1,
+    614.0,
+    616.8,
+    619.6,
+    622.4
+  ],
+  "recommendations": [
+    {
+      "shape": "new",
+      "type": "action",
+      "priority": "secondary",
+      "confidence": "low",
+      "title": "Catch up on your tax reserve",
+      "body": "Your reserve is roughly $1,000 of an estimated roughly $1,350 target. You've started \u2014 staying on plan keeps you ahead of next quarter.",
+      "next_move": "Add roughly $350 before your next quarterly (due in 27 days).",
+      "trigger": "tax_reserve_behind"
+    },
+    {
+      "shape": "new",
+      "type": "action",
+      "priority": "secondary",
+      "confidence": "low",
+      "title": "Build buffer during your stronger months",
+      "body": "Your income shows month-to-month variation. Earmarking part of stronger months builds buffer for the lean ones.",
+      "next_move": "When income comes in above your typical, redirect the difference to liquid savings before it gets reabsorbed.",
+      "trigger": "volatility_buffer"
+    },
+    {
+      "shape": "new",
+      "type": "data_completion",
+      "priority": "secondary",
+      "confidence": "high",
+      "title": "Tell us how you handle your freelance income",
+      "body": "A separate business account gives us more confidence in scoring your income volatility and tax-reserve target.",
+      "next_move": "Confirm in settings whether you use a separate business account or mix freelance with personal banking.",
+      "trigger": null
+    },
+    {
+      "shape": "legacy",
+      "priority": 1,
+      "impact": "FHS",
+      "action": "Months 1\u20132: Redirect $450/month to retirement savings + $325/month to emergency fund",
+      "reason": "Your personalised plan: Months 1\u20132: Redirect $450/month to retirement savings + $325/month to emergency fund \u2192 Months 3: Build emergency fund \u2014 $550/month + $225/month to retirement savings \u2192 Months 4\u20136: Redirect $450/month to retirement savings + $325/month to emergency fund",
+      "phases_count": 3
+    },
+    {
+      "shape": "legacy",
+      "priority": 2,
+      "impact": "FHS",
+      "action": "Save $325/month toward your emergency fund (target $7,200)",
+      "reason": "You currently have 2.5 months of essential expenses saved. Three months is the minimum buffer to absorb income shocks.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Direct $450/month into retirement savings",
+      "reason": "At your age the target for your age is roughly $54,000; you're about 72% behind. Consistent contributions today compound into the next decade.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Get term life insurance",
+      "reason": "Life coverage is one of five resilience milestones; term policies are inexpensive at younger ages.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Add disability insurance to your benefits",
+      "reason": "Disability is a top cause of unplanned income loss; check whether your employer offers it.",
+      "phases_count": 0
+    }
+  ],
+  "recommendations_count": 8
+}

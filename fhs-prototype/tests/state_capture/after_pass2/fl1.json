@@ -1,0 +1,78 @@
+{
+  "label": "fl1",
+  "scores": {
+    "fhs": null,
+    "fss": null,
+    "frs": null
+  },
+  "frs_band": null,
+  "plan": {
+    "phases_count": 1,
+    "plan_phases": [
+      {
+        "months": "1\u20136",
+        "dominant": "Retirement savings",
+        "amount": 1925.0,
+        "description": "Months 1\u20136: Redirect $1,925/month to retirement savings + $850/month to investments",
+        "secondary": "Investment",
+        "secondary_amount": 850.0
+      }
+    ],
+    "allocation_plan_keys": [
+      "list"
+    ],
+    "state_trajectory_len": 6
+  },
+  "optimal_allocation": {
+    "x1_ef_savings": 0.0,
+    "x2_retirement": 1925.0,
+    "x3_hi_debt_paydown": 0.0,
+    "x4_lo_debt_paydown": 0.0,
+    "x5_discretionary": 425.0,
+    "x6_investment": 850.0
+  },
+  "trajectory_unique": [
+    686.2,
+    689.5,
+    738.9,
+    742.3,
+    745.7,
+    746.1,
+    746.5
+  ],
+  "recommendations": [
+    {
+      "shape": "legacy",
+      "priority": 1,
+      "impact": "FHS",
+      "action": "Months 1\u20136: Redirect $1,925/month to retirement savings + $850/month to investments",
+      "reason": "Your personalised plan: Months 1\u20136: Redirect $1,925/month to retirement savings + $850/month to investments",
+      "phases_count": 1
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Add disability insurance to your benefits",
+      "reason": "Disability is a top cause of unplanned income loss; check whether your employer offers it.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 4,
+      "impact": "FRS",
+      "action": "Check in weekly on your spending",
+      "reason": "A weekly look at where your money went is the strongest predictor of momentum \u2014 a few minutes is enough.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 4,
+      "impact": "FHS",
+      "action": "Increase retirement contributions by 1% of gross income",
+      "reason": "Small annual escalations are the most reliable way to hit age-based wealth targets.",
+      "phases_count": 0
+    }
+  ],
+  "recommendations_count": 4
+}

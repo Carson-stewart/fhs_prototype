@@ -1,0 +1,76 @@
+{
+  "label": "fl5",
+  "scores": {
+    "fhs": null,
+    "fss": null,
+    "frs": null
+  },
+  "frs_band": null,
+  "plan": {
+    "phases_count": 1,
+    "plan_phases": [
+      {
+        "months": "1\u20136",
+        "dominant": "Retirement savings",
+        "amount": 500.0,
+        "description": "Months 1\u20136: Redirect $500/month to retirement savings"
+      }
+    ],
+    "allocation_plan_keys": [
+      "list"
+    ],
+    "state_trajectory_len": 6
+  },
+  "optimal_allocation": {
+    "x1_ef_savings": 0.0,
+    "x2_retirement": 500.0,
+    "x3_hi_debt_paydown": 0.0,
+    "x4_lo_debt_paydown": 0.0,
+    "x5_discretionary": 200.0,
+    "x6_investment": 0.0
+  },
+  "trajectory_unique": [
+    581.6,
+    583.4,
+    585.3,
+    610.5,
+    612.5,
+    614.5,
+    616.5
+  ],
+  "recommendations": [
+    {
+      "shape": "legacy",
+      "priority": 1,
+      "impact": "FHS",
+      "action": "Months 1\u20136: Redirect $500/month to retirement savings",
+      "reason": "Your personalised plan: Months 1\u20136: Redirect $500/month to retirement savings",
+      "phases_count": 1
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Direct $500/month into retirement savings",
+      "reason": "At your age the target for your age is roughly $76,800; you're about 77% behind. Consistent contributions today compound into the next decade.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Get term life insurance",
+      "reason": "Life coverage is one of five resilience milestones; term policies are inexpensive at younger ages.",
+      "phases_count": 0
+    },
+    {
+      "shape": "legacy",
+      "priority": 3,
+      "impact": "FHS",
+      "action": "Add disability insurance to your benefits",
+      "reason": "Disability is a top cause of unplanned income loss; check whether your employer offers it.",
+      "phases_count": 0
+    }
+  ],
+  "recommendations_count": 4
+}

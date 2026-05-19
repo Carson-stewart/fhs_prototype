@@ -2460,15 +2460,59 @@ function renderResults(d){
 
     <!-- RIGHT column: actions + allocation -->
     <div class="stack">
-      ${Array.isArray(d.recommendations) && d.recommendations.length ? `
+      ${(() => {
+        // Phase 6 polish (Pass 2, WI-5) — suppress legacy rec cards that
+        // duplicate the canonical "Your 6-month plan" card rendered above
+        // via renderPhasePlan(). The duplicate is identifiable as a legacy
+        // rec carrying a non-empty `phases` array whose `action` string
+        // matches the first plan_phase's `description` verbatim — i.e.
+        // the plan-as-rec-card emission from engine.generate_recommendations.
+        //
+        // Per-step legacy recs (phases_count == 0) ARE preserved even when
+        // their action mentions the same dollar amount, because they
+        // typically add information not present in the plan card itself
+        // (time-to-completion, dollar target, milestone framing).
+        //
+        // Render-layer suppression is intentionally narrow and reversible.
+        // Backend cleanup (stop emitting the duplicate in generate_recommendations)
+        // is a follow-up session, not this one. See CLAUDE.md Phase 6 Pass 2.
+        //
+        // Uses the same window.__ render-layer state-sharing pattern as
+        // Pass 1's WI-4 (window.__suppressAllocCard). Both are stopgaps
+        // flagged for the Phase 7a React Native refactor.
+        const firstPhaseDesc = (Array.isArray(d.plan_phases) && d.plan_phases.length > 0
+                                && d.plan_phases[0] && typeof d.plan_phases[0].description === 'string')
+                               ? d.plan_phases[0].description.trim()
+                               : null;
+        window.__planDupCount = 0;
+        const recs = (Array.isArray(d.recommendations) ? d.recommendations : [])
+          .filter(r => {
+            if (!r || typeof r !== 'object') return false;
+            // New-shape recs never duplicate the plan card (they don't carry
+            // a `phases` array and their title shape is a calm action verb,
+            // not a "Months 1-6: ..." plan-step description).
+            if (typeof r.title === 'string' && typeof r.body === 'string') return true;
+            // Legacy rec: suppress only if it carries phases AND its action
+            // matches the first plan phase description.
+            const hasPhases = Array.isArray(r.phases) && r.phases.length > 0;
+            if (hasPhases && firstPhaseDesc && typeof r.action === 'string'
+                && r.action.trim() === firstPhaseDesc) {
+              window.__planDupCount++;
+              return false;
+            }
+            return true;
+          });
+        if (!recs.length) return '';
+        return `
       <section class="card">
         <div class="card-pad">
           <h3 class="panel-h3">Recommended actions</h3>
           <div class="recs">
-            ${d.recommendations.map(r => renderRecommendationCard(r)).join('')}
+            ${recs.map(r => renderRecommendationCard(r)).join('')}
           </div>
         </div>
-      </section>` : ''}
+      </section>`;
+      })()}
 
       ${(() => {
         // Phase 6 polish (Pass 1, WI-4) — suppress the allocation +

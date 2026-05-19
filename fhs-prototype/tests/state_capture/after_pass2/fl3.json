@@ -1,0 +1,64 @@
+{
+  "label": "fl3",
+  "scores": {
+    "fhs": null,
+    "fss": null,
+    "frs": null
+  },
+  "frs_band": null,
+  "plan": {
+    "phases_count": 0,
+    "plan_phases": [],
+    "allocation_plan_keys": [
+      "list"
+    ],
+    "state_trajectory_len": 0
+  },
+  "optimal_allocation": {},
+  "trajectory_unique": [
+    300
+  ],
+  "recommendations": [
+    {
+      "shape": "new",
+      "type": "action",
+      "priority": "primary",
+      "confidence": "high",
+      "title": "Focus on essentials this period",
+      "body": "Your runway covers about 2 weeks at current spending. Holding to rent, utilities, groceries, and minimums protects what you have while work picks back up.",
+      "next_move": "Cover the must-pays this week. Re-evaluate when work picks back up.",
+      "trigger": "famine"
+    },
+    {
+      "shape": "new",
+      "type": "action",
+      "priority": "secondary",
+      "confidence": "high",
+      "title": "Pause subscriptions you can re-enable later",
+      "body": "Recurring costs compound during periods when work is light. Pausing now and resuming later is reversible \u2014 canceling outright is not.",
+      "next_move": "List your recurring subscriptions and pause the ones you don't need this month.",
+      "trigger": "famine"
+    },
+    {
+      "shape": "new",
+      "type": "action",
+      "priority": "secondary",
+      "confidence": "high",
+      "title": "Tax payment coming up? IRS Form 1127 can extend it",
+      "body": "If your next quarterly is due soon and paying it would create genuine hardship, IRS Form 1127 can extend the payment up to six months.",
+      "next_move": "Look up Form 1127 on IRS.gov. The application takes about 15 minutes.",
+      "trigger": "famine"
+    },
+    {
+      "shape": "new",
+      "type": "action",
+      "priority": "secondary",
+      "confidence": "high",
+      "title": "Reach out to your top clients about upcoming work",
+      "body": "The leading indicator of recovery is conversations, not deposits. A check-in this week may surface work for next month.",
+      "next_move": "Email or message your three most reliable clients.",
+      "trigger": "famine"
+    }
+  ],
+  "recommendations_count": 4
+}
