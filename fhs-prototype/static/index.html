@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Health Score</title>
+<!-- Plaid Link JS SDK (Sandbox + production both load this same URL) -->
+<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+<style>
+  /* ─────────────────────────────────────────────────────────────────────
+     Reset + base typography
+     ───────────────────────────────────────────────────────────────────── */
+  *{box-sizing:border-box;margin:0;padding:0}
+  /* ─── Light-mode palette (default) ─── */
+  :root{
+    --bg-primary:#ffffff;
+    --bg-secondary:#F5F4F2;     /* page background — warm light grey */
+    --bg-card:#ffffff;
+    --bg-tint:#FAFAF8;          /* subtly tinted surface (section headers, trajectory card) */
+    --text-primary:#2c2c2a;
+    --text-secondary:#666666;
+    --text-muted:#999999;
+    --border:#eeeeee;
+    --border-light:#f0f0f0;
+    --border-strong:#d0cdc6;
+    --score-green:#1D9E75;
+    --score-red:#E24B4A;
+    --score-amber:#EF9F27;
+    --score-blue:#378ADD;
+    --bar-track:#eeeeee;
+    --card-shadow:0 1px 3px rgba(0,0,0,0.07),0 4px 12px rgba(0,0,0,0.04);
+    --card-shadow-lg:0 1px 3px rgba(0,0,0,0.08),0 6px 18px rgba(0,0,0,0.06);
+    /* Tinted surfaces used by pills/cards/badges */
+    --accent-soft:#E6EEF8;
+    --good-soft:#E5F4EE;
+    --good-ink:#1D5C3D;
+    --warn-soft:#FBF4E8;
+    --warn-ink:#A6791D;
+    --bad-soft:#FCEFEF;
+    --bad-ink:#7A1F1F;
+    --marker-halo:#ffffff;
+    --btn-hover:#1f4a8c;
+    --gradient-fhs:linear-gradient(90deg,var(--score-red) 0%,var(--score-red) 18%,var(--score-amber) 30%,var(--score-amber) 55%,var(--score-green) 73%,var(--score-green) 100%);
+    --gradient-fss:linear-gradient(90deg,var(--score-green) 0%,var(--score-green) 25%,var(--score-amber) 50%,var(--score-red) 80%,var(--score-red) 100%);
+    --traj-area:var(--score-green);
+  }
+  /* ─── Dark-mode palette (premium "elevated surfaces" feel) ─── */
+  body.dark{
+    --bg-primary:#1a1a1a;
+    --bg-secondary:#121212;
+    --bg-card:#242424;
+    --bg-tint:#1f1f1f;           /* tinted surface — sits between card and page */
+    --text-primary:#e8e6e0;
+    --text-secondary:#a0a0a0;
+    --text-muted:#707070;
+    --border:#333333;
+    --border-light:#2a2a2a;
+    --border-strong:#4a4a4a;
+    --score-green:#5DCAA5;
+    --score-red:#F09595;
+    --score-amber:#FAC775;
+    --score-blue:#85B7EB;
+    --bar-track:#333333;
+    --card-shadow:none;
+    --card-shadow-lg:none;
+    --accent-soft:#1e2a3a;
+    --good-soft:#1d2e26;
+    --good-ink:#9BD9B9;
+    --warn-soft:#362a18;
+    --warn-ink:#FAC775;
+    --bad-soft:#3a1e1e;
+    --bad-ink:#F09595;
+    --marker-halo:#242424;
+    --btn-hover:#6fa7dd;
+  }
+  html,body{background:var(--bg-secondary);color:var(--text-primary);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;transition:background-color .2s ease,color .2s ease}
+  html{color-scheme:light}
+  body.dark{color-scheme:dark}
+  body{font-size:14px}
+  .container{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
+
+  /* ── Header ────────────────────────────────────────────────────────── */
+  header.brand{margin-bottom:28px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  header.brand h1{font-size:24px;font-weight:600;letter-spacing:-0.01em;color:var(--text-primary)}
+  header.brand p{font-size:14px;color:var(--text-secondary);margin-top:4px}
+  .theme-toggle{display:inline-flex;align-items:center;gap:8px;background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);border-radius:999px;padding:10px 16px 10px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;letter-spacing:.01em;transition:color .15s,border-color .15s,background .15s;-webkit-tap-highlight-color:transparent;min-height:44px}
+  .theme-toggle:hover{color:var(--text-primary);border-color:var(--border-strong)}
+  .theme-toggle .theme-icon{font-size:14px;line-height:1;filter:saturate(.2)}
+  body.dark .theme-toggle .theme-icon{filter:none}
+
+  /* ── Cards ─────────────────────────────────────────────────────────── */
+  .card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--card-shadow);overflow:hidden}
+  .card + .card{margin-top:18px}
+  .card-pad{padding:22px 24px}
+  .card-head{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .card-head h2{font-size:18px;font-weight:500;color:var(--text-primary)}
+  .card-head .hint{font-size:12px;color:var(--text-secondary)}
+
+  /* ── Profile selector ──────────────────────────────────────────────── */
+  .selector{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .selector label{font-size:13px;color:var(--text-secondary);font-weight:500;flex-shrink:0}
+  .selector select{flex:1;min-width:240px;padding:10px 12px;font-size:14px;border:1px solid var(--border-strong);border-radius:10px;background:var(--bg-card);color:var(--text-primary);font-family:inherit;cursor:pointer}
+  .selector select:focus{outline:none;border-color:var(--score-blue);box-shadow:0 0 0 3px var(--accent-soft)}
+
+  /* ── Collapsible form sections ─────────────────────────────────────── */
+  details.section{border-top:1px solid var(--border)}
+  details.section:first-of-type{border-top:none}
+  details.section > summary{list-style:none;cursor:pointer;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none;background:var(--bg-tint);border-bottom:1px solid var(--border);min-height:44px}
+  details.section > summary:focus-visible{outline:2px solid var(--score-blue);outline-offset:-2px}
+  details.section > summary::-webkit-details-marker{display:none}
+  details.section > summary:hover{background:var(--bg-primary)}
+  .section-title{font-size:15px;font-weight:500;color:var(--text-secondary);display:flex;align-items:center;gap:10px}
+  .section-title .chev{display:inline-block;width:10px;height:10px;border-right:1.5px solid var(--text-secondary);border-bottom:1.5px solid var(--text-secondary);transform:rotate(-45deg);transition:transform .18s ease}
+  details[open] > summary .chev{transform:rotate(45deg)}
+  .section-summary{font-size:13px;color:var(--text-secondary);text-align:right;font-variant-numeric:tabular-nums}
+  details.section > .section-body{padding:6px 24px 22px}
+
+  .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:12px;color:var(--text-secondary);font-weight:500;letter-spacing:.01em}
+  .field input,.field select{padding:9px 12px;border:1px solid var(--border-strong);border-radius:8px;font-size:14px;background:var(--bg-card);font-family:inherit;color:var(--text-primary)}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--score-blue);box-shadow:0 0 0 3px var(--accent-soft)}
+  .checkbox-row{display:flex;align-items:center;gap:10px;padding:9px 0}
+  .checkbox-row input{width:16px;height:16px;accent-color:var(--score-blue)}
+  .checkbox-row label{font-size:13px;color:var(--text-secondary);cursor:pointer}
+
+  .actions{padding:18px 24px;border-top:1px solid var(--border);display:flex;gap:12px;align-items:center;background:var(--bg-primary)}
+  .btn{background:var(--score-blue);color:#fff;border:none;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s}
+  .btn:hover{background:var(--btn-hover)}
+  .btn[disabled],.btn[aria-disabled="true"]{
+    background:var(--border-strong);cursor:not-allowed;opacity:0.65;
+    box-shadow:none}
+  .btn[disabled]:hover,.btn[aria-disabled="true"]:hover{background:var(--border-strong)}
+  @keyframes btn-enable-pulse {
+    0%   { box-shadow:0 0 0 0 var(--accent-soft); }
+    100% { box-shadow:0 0 0 8px transparent; }
+  }
+  .btn.just-enabled{animation:btn-enable-pulse 200ms ease-out}
+  .btn-ghost{background:transparent;color:var(--text-secondary);border:none;padding:11px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+  .btn-ghost:hover{color:var(--text-primary)}
+
+  /* ── Hero score section ────────────────────────────────────────────── */
+  .hero{margin-top:24px;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--card-shadow-lg);padding:28px 24px}
+  .hero-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+  .gauge{display:flex;flex-direction:column;gap:10px}
+  .gauge-label{font-size:15px;color:var(--text-secondary);font-weight:600;letter-spacing:-.005em}
+  .gauge-sublabel{font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:-6px}
+  .gauge-value{font-size:48px;font-weight:700;line-height:1;letter-spacing:-.02em;color:var(--text-primary);font-variant-numeric:tabular-nums}
+  .gauge-sub{font-size:12px;color:var(--text-muted);margin-top:-2px}
+
+  /* Headline — the single most important line in the product */
+  .headline{margin-top:22px;padding:0 8px;text-align:center;font-size:18px;font-weight:500;line-height:1.45;color:var(--text-secondary);letter-spacing:-.005em;opacity:0;transform:translateY(4px);transition:opacity .5s ease-out,transform .5s ease-out}
+  .headline.show{opacity:1;transform:translateY(0)}
+  .headline .emphasis{color:var(--text-primary);font-weight:600}
+
+  /* Color bar gauge for FHS / FSS */
+  .meter{position:relative;height:10px;border-radius:6px;margin-top:6px;overflow:visible}
+  .meter.fhs{background:var(--gradient-fhs)}
+  .meter.fss{background:var(--gradient-fss)}
+  .meter-marker{position:absolute;top:-3px;width:4px;height:16px;background:var(--text-primary);border-radius:2px;box-shadow:0 0 0 2px var(--marker-halo),0 1px 3px rgba(0,0,0,.25);transform:translateX(-2px)}
+  .meter-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:8px;font-variant-numeric:tabular-nums}
+
+  /* FRS arrow indicator */
+  .frs-indicator{display:flex;align-items:center;gap:14px;margin-top:6px}
+  .frs-arrow{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0}
+  .frs-arrow.up{background:var(--good-soft);color:var(--good-ink)}
+  .frs-arrow.flat{background:var(--warn-soft);color:var(--warn-ink)}
+  .frs-arrow.down{background:var(--bad-soft);color:var(--bad-ink)}
+  .frs-trend{display:flex;flex-direction:column;gap:2px}
+  .frs-trend .label{font-size:13px;font-weight:500;color:var(--text-secondary)}
+  .frs-trend .desc{font-size:12px;color:var(--text-secondary)}
+
+  .infeasible{margin-top:18px;background:var(--bad-soft);color:var(--bad-ink);padding:14px 16px;border-radius:10px;font-size:13px;border:1px solid var(--border)}
+
+  /* Trajectory chart */
+  .trajectory-card{margin-top:18px;background:var(--bg-tint)}
+  .trajectory-chart{width:100%;height:auto;display:block;max-width:640px;margin:6px auto 0;overflow:visible}
+  .trajectory-chart .axis-label{font-size:11px;fill:var(--text-muted);font-family:inherit;font-weight:500}
+  .trajectory-chart .gridline{stroke:var(--border);stroke-width:1}
+  .trajectory-chart .traj-line{fill:none;stroke:var(--score-green);stroke-width:2;stroke-dasharray:4 4;stroke-linecap:round;stroke-linejoin:round}
+  .trajectory-chart .traj-dot-current{fill:var(--text-primary);stroke:var(--bg-card);stroke-width:2}
+  .trajectory-chart .traj-dot-future{fill:var(--score-green);stroke:var(--bg-card);stroke-width:1.5}
+  .trajectory-chart .traj-value-label{font-size:12px;font-weight:600;fill:var(--text-primary);font-family:inherit}
+  .trajectory-caption{margin:14px auto 0;max-width:560px;text-align:center;font-size:15px;color:var(--text-secondary);line-height:1.55}
+  .trajectory-caption strong{color:var(--text-primary);font-weight:600}
+
+  /* ── Two-column results ────────────────────────────────────────────── */
+  .results-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:18px}
+  .results-grid > .stack{display:flex;flex-direction:column;gap:18px}
+  .panel-h3{font-size:13px;font-weight:600;color:var(--text-secondary);letter-spacing:.04em;text-transform:uppercase;margin:0 0 12px}
+
+  /* Breakdown bars */
+  .bars{display:flex;flex-direction:column;gap:10px}
+  .bar-row{display:grid;grid-template-columns:minmax(120px,1fr) 2fr 44px;align-items:center;column-gap:12px;row-gap:2px;padding-bottom:10px;border-bottom:1px solid var(--border-light)}
+  .bars .bar-row:last-child{border-bottom:none;padding-bottom:0}
+  .bar-label{font-size:13px;color:var(--text-secondary)}
+  .bar-track{height:6px;background:var(--bar-track);border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;transition:width .35s ease}
+  .bar-val{font-size:12px;color:var(--text-secondary);text-align:right;font-variant-numeric:tabular-nums}
+  .insight{grid-column:1 / -1;font-size:13px;font-style:italic;color:var(--text-secondary);line-height:1.45;margin:-2px 0 2px;padding-left:1px}
+  /* Circular help icon — visual stays 14×14, hit area extends to 44×44 via
+     a transparent ::before per WCAG 2.5.5. Tap fires a custom tooltip
+     (see help-tooltip below); native title is kept as an accessible-name
+     fallback for screen readers. */
+  .help-icon{position:relative;display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--bg-tint);border:1px solid var(--border);color:var(--text-muted);font-size:10px;font-weight:700;cursor:help;margin-left:4px;vertical-align:middle;line-height:1;font-family:inherit;user-select:none}
+  .help-icon::before{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px}
+  .help-icon:hover,.help-icon:focus{background:var(--accent-soft);color:var(--score-blue);border-color:var(--score-blue);outline:none}
+  .help-icon:focus-visible{outline:2px solid var(--score-blue);outline-offset:2px}
+  .help-icon.active{background:var(--accent-soft);color:var(--score-blue);border-color:var(--score-blue)}
+  /* Tap-fired tooltip (mobile-friendly — works without hover). */
+  .help-tooltip{position:absolute;z-index:50;max-width:300px;background:var(--bg-card);
+    color:var(--text-primary);border:1px solid var(--border);border-radius:8px;
+    padding:10px 12px;font-size:13px;line-height:1.5;
+    box-shadow:var(--card-shadow);pointer-events:none}
+
+  /* Allocation table */
+  .alloc-table{width:100%;border-collapse:collapse;margin-top:6px}
+  .alloc-table th{text-align:left;font-size:11px;color:var(--text-secondary);font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--border)}
+  .alloc-table th.amt{text-align:right}
+  .alloc-table td{padding:9px 0;font-size:14px;border-bottom:1px solid var(--border);color:var(--text-secondary)}
+  .alloc-table td.amount{text-align:right;font-weight:500;font-variant-numeric:tabular-nums;color:var(--text-primary)}
+
+  .milestones{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+  /* Visual size stays small; the 44×44 tap target is provided via padding +
+     min-height/width per WCAG 2.5.5. */
+  .milestone{padding:12px 14px;border-radius:14px;font-size:12px;font-weight:500;border:1px solid transparent;min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;cursor:default}
+  .milestone:focus-visible{outline:2px solid var(--score-blue);outline-offset:2px}
+  .milestone.achieved{background:var(--good-soft);color:var(--good-ink);border-color:var(--border)}
+  .milestone.missed{background:var(--bg-primary);color:var(--text-secondary);border-color:var(--border)}
+  /* Third state: dimmed/greyed-out for "not applicable at your life stage". */
+  .milestone.na{background:transparent;color:var(--text-muted);border-color:var(--border-light);opacity:0.55;cursor:help;font-style:italic}
+
+  /* Recommendations */
+  .recs{display:flex;flex-direction:column;gap:10px}
+  .rec-card{background:var(--bg-primary);border:1px solid var(--border);border-left:4px solid var(--border-strong);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+  .rec-card.priority-1{border-left-color:var(--score-red);background:var(--bad-soft)}
+  .rec-card.priority-2{border-left-color:var(--score-amber);background:var(--warn-soft)}
+  .rec-card.priority-3{border-left-color:var(--score-green)}
+  .rec-action{font-weight:600;font-size:14px;color:var(--text-primary)}
+  .rec-reason{font-size:13px;color:var(--text-secondary);line-height:1.5}
+  .rec-meta{display:flex;gap:8px;align-items:center;margin-top:2px}
+  .rec-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;background:var(--accent-soft);color:var(--score-blue);letter-spacing:.06em;text-transform:uppercase}
+  .rec-badge.fss{background:var(--bad-soft);color:var(--bad-ink)}
+  .rec-badge.frs{background:var(--good-soft);color:var(--good-ink)}
+  .rec-priority{font-size:11px;color:var(--text-muted)}
+
+  .hidden{display:none}
+  /* Tooltip indicator (dotted underline on labels with title attr) */
+  [title]:not(input):not(button):not(select){text-decoration:none}
+  .gauge-label[title],.bar-label[title],.field label[title],.checkbox-row label[title]{
+    border-bottom:1px dotted var(--text-muted);cursor:help
+  }
+
+  /* ── Responsive ────────────────────────────────────────────────────── */
+  @media (max-width:780px){
+    .container{padding:20px 14px 60px}
+    .hero{padding:22px 18px}
+    .hero-grid{grid-template-columns:1fr;gap:24px}
+    .results-grid{grid-template-columns:1fr;gap:18px}
+    .form-grid{grid-template-columns:1fr;gap:12px}
+    .gauge-value{font-size:42px}
+    header.brand h1{font-size:20px}
+    .card-pad,.card-head,.actions{padding-left:18px;padding-right:18px}
+    details.section > summary,details.section > .section-body{padding-left:18px;padding-right:18px}
+    .section-summary{display:none}
+    .bar-row{grid-template-columns:minmax(110px,1.1fr) 1.5fr 38px}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="brand">
+    <div class="brand-text">
+      <h1>Financial Health Score</h1>
+      <p>See where you stand. Know what to do next.</p>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode" aria-pressed="false">
+      <span class="theme-icon" id="theme-icon">🌙</span>
+      <span class="theme-label" id="theme-label">Dark mode</span>
+    </button>
+  </header>
+
+  <!-- ── Connect bank (Plaid Sandbox demo) — purely additive to the form ── -->
+  <div class="card" id="plaid-card">
+    <div class="card-pad" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px">
+        <div style="font-size:15px;font-weight:600;color:var(--text-primary)">
+          Connect a bank account
+          <span style="display:inline-block;font-size:10px;font-weight:700;
+                       padding:2px 8px;border-radius:8px;letter-spacing:.05em;
+                       text-transform:uppercase;background:var(--accent-soft);
+                       color:var(--score-blue);margin-left:6px;
+                       vertical-align:middle">Sandbox demo</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;line-height:1.5">
+          Auto-fills the form below from a connected bank, or fill it in manually.
+          Sandbox uses test credentials — no real bank data.
+        </div>
+      </div>
+      <button type="button" id="plaid-connect-btn"
+              class="btn"
+              aria-label="Connect a bank account using Plaid (sandbox demo)"
+              style="min-height:44px"
+              onclick="onPlaidConnectClick()">
+        Connect bank (Sandbox)
+      </button>
+    </div>
+    <!-- Connected banks pill list (populated dynamically). -->
+    <div id="plaid-connected"
+         style="display:none;padding:0 24px 12px"
+         role="list" aria-label="Connected banks"></div>
+    <div id="plaid-status"
+         style="display:none;padding:0 24px 16px;font-size:13px;color:var(--text-secondary)"
+         role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- ── Profile selector + form ────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-head">
+      <div class="selector">
+        <label for="profile-select">Load a test profile</label>
+        <select id="profile-select" onchange="onProfileSelect(this.value)">
+          <option value="">— Choose an archetype —</option>
+        </select>
+      </div>
+    </div>
+
+    <details class="section" open>
+      <summary>
+        <span class="section-title"><span class="chev"></span>Income</span>
+        <span class="section-summary" id="sum-income">—</span>
+      </summary>
+      <div class="section-body">
+        <div class="form-grid">
+          <div class="field">
+            <label title="Total monthly pay before taxes and deductions">Monthly gross income</label>
+            <input type="number" id="I_gross" placeholder="e.g. 6000" step="100">
+          </div>
+          <div class="field">
+            <label title="The amount that hits your bank account each month after withholdings">Monthly take-home (after tax)</label>
+            <input type="number" id="I_net" placeholder="e.g. 4500" step="100">
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>
+        <span class="section-title"><span class="chev"></span>Expenses</span>
+        <span class="section-summary" id="sum-expenses">—</span>
+      </summary>
+      <div class="section-body">
+        <div class="form-grid">
+          <div class="field">
+            <label title="Fixed, necessary costs: rent/mortgage, utilities, groceries, insurance, childcare">Monthly essential expenses</label>
+            <input type="number" id="E_ess" placeholder="e.g. 2800" step="100">
+          </div>
+          <div class="field">
+            <label title="Rent or mortgage payment — must be a subset of essentials">Monthly housing cost</label>
+            <input type="number" id="E_house" placeholder="e.g. 1400" step="100">
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>
+        <span class="section-title"><span class="chev"></span>Debt</span>
+        <span class="section-summary" id="sum-debt">—</span>
+      </summary>
+      <div class="section-body">
+        <div class="form-grid">
+          <div class="field">
+            <label title="Minimum required payments across all debts">Monthly minimum debt payments</label>
+            <input type="number" id="D_min" placeholder="e.g. 600" step="50">
+          </div>
+          <div class="field">
+            <label title="Outstanding balance on debts charging more than 15% APR">High-interest debt balance (&gt;15% APR)</label>
+            <input type="number" id="D_hi" placeholder="e.g. 5000" step="500">
+          </div>
+          <div class="field">
+            <label title="Mortgage principal, car loans, and student loans under 15% APR">Other debt balance</label>
+            <input type="number" id="D_lo" placeholder="e.g. 25000" step="1000">
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>
+        <span class="section-title"><span class="chev"></span>Savings</span>
+        <span class="section-summary" id="sum-savings">—</span>
+      </summary>
+      <div class="section-body">
+        <div class="form-grid">
+          <div class="field">
+            <label title="Cash you could access within a day or two">Liquid savings balance</label>
+            <input type="number" id="S_liq" placeholder="e.g. 4000" step="500">
+          </div>
+          <div class="field">
+            <label title="Total across all retirement accounts: 401(k), IRA, Roth IRA, etc.">Retirement savings balance</label>
+            <input type="number" id="S_ret" placeholder="e.g. 20000" step="1000">
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>
+        <span class="section-title"><span class="chev"></span>Profile</span>
+        <span class="section-summary" id="sum-profile">—</span>
+      </summary>
+      <div class="section-body">
+        <fieldset id="about-you"
+                  style="border:1px dashed var(--border-strong);border-radius:10px;
+                         padding:14px 16px 8px;margin:0 0 14px;background:var(--bg-tint)">
+          <legend style="font-size:12px;font-weight:700;color:var(--text-primary);
+                         padding:0 8px;letter-spacing:.04em;text-transform:uppercase">
+            About you
+          </legend>
+          <div style="font-size:13px;color:var(--text-secondary);margin:-2px 0 12px;line-height:1.5">
+            Plaid doesn't know these — please fill in.
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="age" title="Used to calculate retirement target via Fidelity age-based benchmarks">Age <span aria-hidden="true" style="color:var(--bad-ink)">*</span></label>
+              <input type="number" id="age" value="" min="18" max="85" required
+                     aria-required="true"
+                     placeholder="e.g. 32">
+            </div>
+            <div class="field">
+              <div class="checkbox-row">
+                <input type="checkbox" id="life_ins">
+                <label for="life_ins" title="Active term or whole life insurance coverage">Has life insurance</label>
+              </div>
+              <div class="checkbox-row">
+                <input type="checkbox" id="disab_ins">
+                <label for="disab_ins" title="Short- or long-term disability insurance">Has disability insurance</label>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+        <div class="form-grid">
+          <div class="field">
+            <label title="Number of times your checking account went below zero in the past 90 days">Overdrafts (last 90 days)</label>
+            <input type="number" id="overdrafts" value="0" min="0">
+          </div>
+          <div class="field">
+            <label title="Bill or debt payments made after the due date in the past 90 days">Late payments (last 90 days)</label>
+            <input type="number" id="late_payments" value="0" min="0">
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="section" id="prev-section">
+      <summary>
+        <span class="section-title"><span class="chev"></span>30-day comparison <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:var(--good-soft);color:var(--good-ink);margin-left:8px">Improves FRS accuracy</span></span>
+        <span class="section-summary" id="sum-prev">Optional</span>
+      </summary>
+      <div class="section-body">
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.5">
+          Enter your balances from 30 days ago. When provided, your Recovery Score
+          reflects what actually changed — not just what the plan predicts.
+        </p>
+        <div class="form-grid">
+          <div class="field">
+            <label title="Liquid savings balance 30 days ago">Liquid savings (30 days ago)</label>
+            <input type="number" id="prev_S_liq" placeholder="Leave blank if unchanged" step="500">
+          </div>
+          <div class="field">
+            <label title="Retirement savings balance 30 days ago">Retirement savings (30 days ago)</label>
+            <input type="number" id="prev_S_ret" placeholder="Leave blank if unchanged" step="1000">
+          </div>
+          <div class="field">
+            <label title="High-interest debt balance 30 days ago">High-interest debt (30 days ago)</label>
+            <input type="number" id="prev_D_hi" placeholder="Leave blank if unchanged" step="500">
+          </div>
+          <div class="field">
+            <label title="Other debt balance 30 days ago">Other debt (30 days ago)</label>
+            <input type="number" id="prev_D_lo" placeholder="Leave blank if unchanged" step="1000">
+          </div>
+          <div class="field">
+            <label title="Monthly essential expenses 30 days ago">Essential expenses (30 days ago)</label>
+            <input type="number" id="prev_E_ess" placeholder="Leave blank if unchanged" step="100">
+          </div>
+          <div class="field">
+            <label title="Monthly gross income 30 days ago">Gross income (30 days ago)</label>
+            <input type="number" id="prev_I_gross" placeholder="Leave blank if unchanged" step="100">
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button class="btn" id="compute-btn" onclick="computeScore()"
+              aria-describedby="compute-btn-help">
+        Compute scores
+      </button>
+      <span id="compute-btn-help" class="visually-hidden"
+            style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+                   overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">
+        Please fill in your age to calculate your score.
+      </span>
+      <button class="btn-ghost" onclick="expandAll(true)">Expand all</button>
+      <button class="btn-ghost" onclick="expandAll(false)">Collapse all</button>
+    </div>
+  </div>
+
+  <!-- ── Hero scores + breakdowns rendered here ─────────────────────── -->
+  <div id="results" class="hidden"></div>
+  <div id="history-section"></div>
+</div>
+
+<script>
+// ── Anonymous user identity ──────────────────────────────────────────
+function getUserId() {
+  try {
+    let uid = localStorage.getItem('fhs-user-id');
+    if (!uid) {
+      uid = 'u-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem('fhs-user-id', uid);
+    }
+    return uid;
+  } catch(_) {
+    return 'anonymous';
+  }
+}
+const USER_ID = getUserId();
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'X-User-Id': USER_ID };
+}
+
+// ── Plaid session ID (P4-4) ──────────────────────────────────────────
+// One ID per browser tab/session. Cleared on tab close — that's the
+// disconnect mechanism for prototype scope. crypto.randomUUID() is
+// available in all modern browsers; Node's `getRandomValues` shim is
+// already provided by jsdom-style environments if needed.
+function getPlaidSessionId() {
+  try {
+    let sid = sessionStorage.getItem('fhs-plaid-session-id');
+    if (!sid) {
+      sid = (crypto.randomUUID && crypto.randomUUID()) ||
+            ('s-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12));
+      sessionStorage.setItem('fhs-plaid-session-id', sid);
+    }
+    return sid;
+  } catch(_) {
+    return 'anonymous-session';
+  }
+}
+const PLAID_SESSION_ID = getPlaidSessionId();
+// Tracks every Plaid map fetch sequence number — so a stale earlier
+// response cannot overwrite a newer one if they race.
+let _plaidMapSeq = 0;
+let _plaidMapPromise = Promise.resolve();   // serializes prefill chains
+// In-memory list of connected institutions for the current session.
+const _plaidConnectedBanks = [];   // [{item_id, name}]
+
+// ── Input fingerprint — must match history.compute_fingerprint() in Python.
+// Stable canonical string so each profile has its own isolated score history.
+function currentFingerprint() {
+  const fields = {
+    I_gross: v('I_gross'), I_net: v('I_net'),
+    E_ess:   v('E_ess'),   E_house: v('E_house'),
+    D_min:   v('D_min'),   D_hi:    v('D_hi'),
+    D_lo:    v('D_lo'),    S_liq:   v('S_liq'),
+    S_ret:   v('S_ret'),   age:     v('age'),
+  };
+  const keys = ['I_gross','I_net','E_ess','E_house','D_min',
+                'D_hi','D_lo','S_liq','S_ret','age'];
+  return keys.map(k => `${k}=${Math.round(Number(fields[k] || 0))}`).join('|');
+}
+
+// ── Tooltip copy ─────────────────────────────────────────────────────
+const TIPS = {
+  // FHS breakdown rows
+  'Emergency fund':   'How many months of essential expenses you could cover from liquid savings if your income stopped. Target: 3–6 months.',
+  'Debt health':      'Combines how much of your income goes to minimum debt payments and how much high-interest debt you carry. Healthy is low on both.',
+  'Savings capacity': 'What percent of your take-home pay is left over after essentials and minimum debt payments. More room means more flexibility to save or invest.',
+  'Housing':          'Your monthly housing cost as a share of gross income. Guideline: under 28% is healthy, 28–36% is stretched, above 36% starts to squeeze other goals.',
+  'Retirement':       'Your retirement savings compared to an age-based target (modeled on standard industry benchmarks).',
+  'Resilience':       'Five protective milestones: emergency fund adequacy, life insurance, disability insurance, retirement on-track, and high-interest debt eliminated.',
+
+  // FSS breakdown rows — use both engine keys AND renamed keys
+  'Cushion gap':          'How far below a 3-month emergency fund you are. The wider the gap, the more exposed you are to income shocks.',
+  'EF deficit':           'How far below a 3-month emergency fund you are. The wider the gap, the more exposed you are to income shocks.',
+  'Debt load':            'What share of your gross income goes to minimum debt payments. Above 36% starts to strain your budget.',
+  'DTI excess':           'What share of your gross income goes to minimum debt payments. Above 36% starts to strain your budget.',
+  'Costly debt weight':   'High-interest debt balance relative to your annual income. Even if you make minimums, large balances compound fast.',
+  'HI debt burden':       'High-interest debt balance relative to your annual income. Even if you make minimums, large balances compound fast.',
+  'Savings shortfall':    'Gap between how much you’re currently saving and the 20%-of-income target.',
+  'Savings rate deficit': 'Gap between how much you’re currently saving and the 20%-of-income target.',
+  'Rent stretch':         'How far your housing cost pushes above 28% of gross income. The higher, the more it squeezes everything else.',
+  'Housing excess':       'How far your housing cost pushes above 28% of gross income. The higher, the more it squeezes everything else.',
+  'Behavioral alerts':    'Overdrafts and late payments in the last 90 days — behavioral signals of strain.',
+  'Missed payments':      'You cannot fully cover required minimum debt payments from your take-home pay.',
+  'Debt payment shortfall':'You cannot fully cover required minimum debt payments from your take-home pay.',
+  'Missing coverage':     'Missing life and/or disability insurance. Tail-risk exposure that cashflow metrics don’t capture.',
+  'Insurance gap':        'Missing life and/or disability insurance. Tail-risk exposure that cashflow metrics don’t capture.',
+  'Retirement catch-up':  'Distance from an age-based retirement target, weighted heavier as you age.',
+  'Retirement gap':       'Distance from an age-based retirement target, weighted heavier as you age.',
+
+  // Score card headers
+  'Financial Health Score':   'Overall financial wellbeing on a 300–850 scale, like a credit score but broader in scope.',
+  'Financial Strain Score':   'How much pressure you are under right now. Lower is better — 0 means no measurable strain.',
+  'Financial Recovery Score': 'How quickly you are improving — your trend over time scaled by how consistently you engage.',
+};
+function tipAttr(label){
+  const key = LABEL_RENAME[label] || label;
+  const tip = TIPS[key] || TIPS[label];
+  return tip ? ` title="${tip}"` : '';
+}
+
+// ── Rename jargon-heavy internal keys to plain-English UI labels ────
+// Engine-side data keys stay untouched (preserves archetype compliance);
+// we only remap at render time. Anything not in the map passes through.
+const LABEL_RENAME = {
+  // FSS breakdown rows
+  'EF deficit':               'Cushion gap',
+  'DTI excess':               'Debt load',
+  'HI debt burden':           'Costly debt weight',
+  'Savings rate deficit':     'Savings shortfall',
+  'Housing excess':           'Rent stretch',
+  'Debt payment shortfall':   'Missed payments',
+  'Insurance gap':            'Missing coverage',
+  'Retirement gap':           'Retirement catch-up',
+  // FHS breakdown rows — these are already human-readable, but the
+  // map exists here so any future rename just extends this.
+};
+
+// Breakdown rows filtered entirely out of the UI (still computed
+// internally; just not shown to end users).
+const UI_HIDDEN_BREAKDOWN_KEYS = new Set(['LP optimization', 'FVI momentum']);
+
+function uiLabel(rawKey){ return LABEL_RENAME[rawKey] || rawKey; }
+
+// (?) help icon rendered next to every breakdown row.
+// On click/tap (mobile-friendly) we render a positioned <div role="tooltip">.
+// Native `title` is retained so screen readers and pure-hover desktop users
+// still get the explanation. Wired up via delegated listener (see DOM ready).
+function helpIcon(rawKey){
+  const tip = TIPS[uiLabel(rawKey)] || TIPS[rawKey];
+  if (!tip) return '';
+  const safe = tip.replace(/"/g,'&quot;');
+  return ` <span class="help-icon" tabindex="0" role="button" aria-haspopup="true" aria-expanded="false" aria-label="${safe}" data-tip="${safe}">?</span>`;
+}
+
+// Currently-open help tooltip (single instance, body-attached).
+let _activeHelpTip = null;
+let _activeHelpIcon = null;
+function _closeHelpTip(){
+  if (_activeHelpTip) {
+    _activeHelpTip.remove();
+    _activeHelpTip = null;
+  }
+  if (_activeHelpIcon) {
+    _activeHelpIcon.classList.remove('active');
+    _activeHelpIcon.setAttribute('aria-expanded', 'false');
+    _activeHelpIcon = null;
+  }
+}
+function _openHelpTip(icon){
+  _closeHelpTip();
+  const tip = icon.getAttribute('data-tip');
+  if (!tip) return;
+  const div = document.createElement('div');
+  div.className = 'help-tooltip';
+  div.setAttribute('role', 'tooltip');
+  div.textContent = tip;
+  document.body.appendChild(div);
+  // Position above the icon, centered. Clamp to viewport.
+  const r = icon.getBoundingClientRect();
+  const tipW = div.offsetWidth, tipH = div.offsetHeight;
+  let left = r.left + r.width/2 - tipW/2 + window.scrollX;
+  let top  = r.top - tipH - 8 + window.scrollY;
+  // If too close to top of viewport, place below the icon.
+  if (r.top < tipH + 12) top = r.bottom + 8 + window.scrollY;
+  // Clamp horizontal to ≥ 8px from viewport edge.
+  left = Math.max(8 + window.scrollX,
+                  Math.min(left, window.scrollX + window.innerWidth - tipW - 8));
+  div.style.left = left + 'px';
+  div.style.top  = top  + 'px';
+  _activeHelpTip = div;
+  _activeHelpIcon = icon;
+  icon.classList.add('active');
+  icon.setAttribute('aria-expanded', 'true');
+}
+// Delegated listeners — work for any .help-icon, present or future.
+document.addEventListener('click', (e) => {
+  const icon = e.target.closest('.help-icon');
+  if (icon) {
+    e.stopPropagation();
+    if (_activeHelpIcon === icon) _closeHelpTip();
+    else _openHelpTip(icon);
+    return;
+  }
+  // Click outside any open tooltip dismisses it.
+  if (_activeHelpTip && !e.target.closest('.help-tooltip')) _closeHelpTip();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') _closeHelpTip();
+  // Enter / Space on a focused help-icon should also open the tooltip.
+  if ((e.key === 'Enter' || e.key === ' ') &&
+      document.activeElement?.classList.contains('help-icon')) {
+    e.preventDefault();
+    if (_activeHelpIcon === document.activeElement) _closeHelpTip();
+    else _openHelpTip(document.activeElement);
+  }
+});
+
+// ── Theme (dark / light) ─────────────────────────────────────────────
+function applyTheme(theme){
+  const dark = (theme === 'dark');
+  document.body.classList.toggle('dark', dark);
+  const icon = document.getElementById('theme-icon');
+  const label = document.getElementById('theme-label');
+  const btn = document.querySelector('.theme-toggle');
+  if (icon)  icon.textContent  = dark ? '☀' : '🌙';
+  if (label) label.textContent = dark ? 'Light mode' : 'Dark mode';
+  if (btn)   btn.setAttribute('aria-pressed', String(dark));
+}
+function toggleTheme(){
+  const next = document.body.classList.contains('dark') ? 'light' : 'dark';
+  try { localStorage.setItem('fhs-theme', next); } catch(_) {}
+  applyTheme(next);
+}
+// Apply stored preference as early as possible, before DOMContentLoaded fires,
+// so users never see a flash of the wrong palette.
+(function(){
+  try {
+    const saved = localStorage.getItem('fhs-theme');
+    if (saved === 'dark') document.body.classList.add('dark');
+  } catch(_) {}
+})();
+
+// ── Form helpers ─────────────────────────────────────────────────────
+const FIELD_IDS = ['I_gross','I_net','E_ess','E_house','D_min','D_hi','D_lo','S_liq','S_ret','age','overdrafts','late_payments'];
+function v(id){ return +document.getElementById(id).value || 0; }
+function fmt(n){ return typeof n === 'number'
+  ? '$' + n.toLocaleString(undefined,{maximumFractionDigits:0})
+  : '—'; }
+function fmtK(n){
+  if (n >= 1000) return '$' + (n/1000).toLocaleString(undefined,{maximumFractionDigits:1}) + 'k';
+  return '$' + n.toLocaleString(undefined,{maximumFractionDigits:0});
+}
+
+function refreshSummaries(){
+  document.getElementById('sum-income').textContent   = `${fmt(v('I_gross'))} gross · ${fmt(v('I_net'))} net`;
+  document.getElementById('sum-expenses').textContent = `${fmt(v('E_ess'))} essentials · ${fmt(v('E_house'))} housing`;
+  document.getElementById('sum-debt').textContent     = `${fmt(v('D_min'))}/mo · HI ${fmtK(v('D_hi'))} · other ${fmtK(v('D_lo'))}`;
+  document.getElementById('sum-savings').textContent  = `${fmtK(v('S_liq'))} liquid · ${fmtK(v('S_ret'))} retirement`;
+  const life = document.getElementById('life_ins').checked ? 'L' : '–';
+  const dis  = document.getElementById('disab_ins').checked ? 'D' : '–';
+  document.getElementById('sum-profile').textContent  = `Age ${v('age')} · Ins [${life}/${dis}] · ${v('overdrafts')+v('late_payments')} alerts`;
+}
+function expandAll(open){
+  document.querySelectorAll('details.section').forEach(d => { d.open = open; });
+}
+
+// Wire input listeners to keep summaries fresh.
+// ── Compute-button gating (P4-4.5) ────────────────────────────────────
+// The only strictly required field is `age`. Until it has a positive
+// value, disable the Compute button with an aria-describedby-linked
+// reason. Watch the input and update on every keystroke.
+function refreshComputeButtonGate() {
+  const btn = document.getElementById('compute-btn');
+  if (!btn) return;
+  const ageVal = parseInt(document.getElementById('age')?.value || '', 10);
+  const valid = !Number.isNaN(ageVal) && ageVal >= 18 && ageVal <= 85;
+  const wasDisabled = btn.hasAttribute('disabled');
+  if (valid) {
+    if (wasDisabled) {
+      btn.removeAttribute('disabled');
+      btn.setAttribute('aria-disabled', 'false');
+      // Brief highlight to draw the eye when the gate releases.
+      btn.classList.add('just-enabled');
+      setTimeout(() => btn.classList.remove('just-enabled'), 220);
+    }
+    btn.title = '';
+  } else {
+    btn.setAttribute('disabled', 'disabled');
+    btn.setAttribute('aria-disabled', 'true');
+    btn.title = 'Please fill in your age to calculate your score.';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  FIELD_IDS.forEach(id => document.getElementById(id).addEventListener('input', refreshSummaries));
+  ['life_ins','disab_ins'].forEach(id => document.getElementById(id).addEventListener('change', refreshSummaries));
+  // Compute-button gate.
+  document.getElementById('age')?.addEventListener('input', refreshComputeButtonGate);
+  refreshComputeButtonGate();
+  // P4-H4 Fix #2 — flag inputs the user typed into so the Plaid pre-pass
+  // can preserve them across syncs. Archetype loads write programmatically
+  // (which does NOT fire `input`) and explicitly clear the flag below.
+  if (typeof INDIVIDUAL_INPUT_FORM_FIELDS !== 'undefined') {
+    INDIVIDUAL_INPUT_FORM_FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      el?.addEventListener('input', () => { el.dataset.userEdited = 'true'; });
+    });
+  }
+  // Sync the toggle button's glyph + label with the current theme.
+  applyTheme(document.body.classList.contains('dark') ? 'dark' : 'light');
+  refreshSummaries();
+  loadProfileList();
+  loadAndRenderHistory();
+});
+
+// ── Profile dropdown ────────────────────────────────────────────────
+// ── Plaid → form prefill (P4-3.6) ──────────────────────────────────
+// Field IDs in the manual form match the engine field names exactly
+// (I_gross, I_net, E_ess, etc.) so we can map by name. The mapper only
+// produces seven fields — `I_gross`, `E_house`, `age`, `dependents`,
+// `retired` etc. stay manual-only.
+const PREFILL_FIELD_IDS = {
+  I_net:  'I_net',
+  E_ess:  'E_ess',
+  S_liq:  'S_liq',
+  S_ret:  'S_ret',
+  D_hi:   'D_hi',
+  D_lo:   'D_lo',
+  D_min:  'D_min',
+};
+
+// P4-H3 — single canonical list of every form input that corresponds
+// to an IndividualInput field (categories A + B from the H3 audit).
+//   A — written by the Plaid mapper:  I_net, E_ess, S_liq, S_ret, D_hi, D_lo, D_min
+//   B — IndividualInput but manual:   I_gross, E_house, age, overdrafts, late_payments
+// Update this list whenever a new IndividualInput numeric field is added
+// to the form. The defensive pre-pass iterates this list — NOT just the
+// mapper's output keys — so manual fields (E_house, I_gross, …) are also
+// cleared between archetype/Plaid switches and never carry stale values.
+// `FIELD_IDS` (line ~739) is the same list used by refreshSummaries; the
+// alias makes intent explicit at the call site.
+const INDIVIDUAL_INPUT_FORM_FIELDS = [
+  'I_gross','I_net','E_ess','E_house','D_min','D_hi','D_lo',
+  'S_liq','S_ret','age','overdrafts','late_payments',
+];
+
+const CONF_BADGE = {
+  high:    {symbol:'✓', bg:'var(--good-soft)', fg:'var(--good-ink)',
+            ariaPrefix:'High confidence: from Plaid bank data'},
+  medium:  {symbol:'•', bg:'var(--warn-soft)', fg:'var(--warn-ink)',
+            ariaPrefix:'Medium confidence: please verify'},
+  low:     {symbol:'!', bg:'var(--bad-soft)',  fg:'var(--bad-ink)',
+            ariaPrefix:'Low confidence: please verify'},
+  missing: {symbol:'—', bg:'var(--bg-tint)',   fg:'var(--text-muted)',
+            ariaPrefix:'Not detected — please enter manually'},
+};
+
+function _confidenceBadgeHTML(conf, notes) {
+  const c = CONF_BADGE[conf] || CONF_BADGE.missing;
+  const fullAria = notes ? `${c.ariaPrefix}. ${notes}` : c.ariaPrefix;
+  // Reuses the .help-icon styling so tap-toggle behavior, focus ring, and
+  // 44×44 hit area come along for free.
+  return `<span class="help-icon plaid-conf-badge"
+                 tabindex="0" role="button"
+                 aria-haspopup="true" aria-expanded="false"
+                 style="background:${c.bg};color:${c.fg};border-color:transparent;
+                        font-weight:700"
+                 aria-label="${fullAria.replace(/"/g,'&quot;')}"
+                 data-tip="${fullAria.replace(/"/g,'&quot;')}">${c.symbol}</span>`;
+}
+
+function prefillFormFromMap(mapped) {
+  if (!mapped) return;
+  // P4-H2 / P4-H3 / P4-H4 — defensive pre-pass with manual-preservation.
+  //
+  //   H2: cleared mapper-written fields only.
+  //   H3: widened scope to all 12 IndividualInput fields (cat A + B).
+  //   H4: skips fields the user has manually edited UNLESS the mapper
+  //       has a high/medium-confidence value to overwrite them with.
+  //
+  // The user-edit signal is `dataset.userEdited === "true"`, set by the
+  // global `input` listener installed at DOMContentLoaded. Archetype
+  // load explicitly clears the flag (programmatic writes don't fire
+  // `input`). This is the dominant Test 3 / Scenario 3.4 case: a user
+  // who types I_net=5000 and then connects a second bank should keep
+  // their entry, since the mapper still has no income signal.
+  const cleared = [], preserved = [];
+  for (const id of INDIVIDUAL_INPUT_FORM_FIELDS) {
+    const input = document.getElementById(id);
+    if (!input) continue;
+    const userEdited = input.dataset.userEdited === 'true';
+    // Map-side: would the mapper overwrite this field anyway?
+    // PREFILL_FIELD_IDS is a name→id map; here we need id→name. Reverse
+    // lookup: find the mapper-key whose id matches this input's id.
+    const mapperKey = Object.keys(PREFILL_FIELD_IDS)
+      .find(k => PREFILL_FIELD_IDS[k] === id);
+    const mf = mapperKey ? mapped[mapperKey] : null;
+    const mapperWillWriteHigh = mf
+      && (mf.confidence === 'high' || mf.confidence === 'medium')
+      && mf.value !== null && mf.value !== undefined;
+    if (userEdited && !mapperWillWriteHigh) {
+      preserved.push({id, value: input.value});
+      // Keep value AND keep the userEdited flag so subsequent syncs
+      // continue to respect the user's choice.
+      continue;
+    }
+    if (input.value !== '') cleared.push({id, prior: input.value});
+    input.value = '';
+    input.dataset.userEdited = 'false';   // mapper is about to win
+    // Drop any stale confidence badge from a prior sync.
+    const label = input.parentElement?.querySelector('label');
+    label?.querySelectorAll('.plaid-conf-badge').forEach(b => b.remove());
+  }
+  // One-shot diagnostic. Trims to a single line and produces no output
+  // if every field was already empty.
+  if (cleared.length) {
+    console.debug('[plaid] pre-pass cleared:',
+      cleared.map(c => `${c.id}=${c.prior}`).join(', '));
+  }
+  if (preserved.length) {
+    console.debug('[plaid] pre-pass preserved (user-edited):',
+      preserved.map(c => `${c.id}=${c.value}`).join(', '));
+  }
+  for (const [field, mf] of Object.entries(mapped)) {
+    const id = PREFILL_FIELD_IDS[field];
+    if (!id) continue;
+    const input = document.getElementById(id);
+    if (!input) continue;
+    if (mf.value !== null && mf.value !== undefined) {
+      input.value = Math.round(mf.value);
+    }
+    // Insert a confidence badge right after the input's parent <label>.
+    const label = input.parentElement?.querySelector('label');
+    if (label && !label.querySelector('.plaid-conf-badge')) {
+      label.insertAdjacentHTML('beforeend', ' ' + _confidenceBadgeHTML(mf.confidence, mf.notes));
+    }
+  }
+  // Open the relevant collapsible sections so the prefilled fields are visible.
+  document.querySelectorAll('details.section').forEach(d => { d.open = true; });
+  // Trigger the existing summary-refresher to update the inline summaries.
+  if (typeof refreshSummaries === 'function') refreshSummaries();
+}
+
+// Renders the success message + a collapsible "raw Plaid data" viewer.
+// Useful for P4-3 mapper development — eyeball real Plaid response shapes
+// without poking at DevTools.
+function renderPlaidResult(instName, data, mapped) {
+  const statusEl = document.getElementById('plaid-status');
+  if (!statusEl) return;
+
+  // P4-H2 Bug #1 fix — per-product availability summary now handles BOTH
+  // shapes: legacy single-item ({accounts, transactions, ...}) and the
+  // P4-4 multi-bank shape ({items: [{accounts, transactions, ...}, ...]}).
+  // Previously we only inspected the top level, so multi-bank responses
+  // always rendered "no products available" even with products populated.
+  const itemSlices = Array.isArray(data?.items) ? data.items : [data];
+  let totalAccounts = 0, totalTxns = 0;
+  let anyLiabilities = false, anyInvestments = false, anyRecurring = false;
+  for (const it of itemSlices) {
+    if (it?.accounts?.available)     totalAccounts += (it.accounts.data?.accounts || []).length;
+    if (it?.transactions?.available) totalTxns     += (it.transactions.data || []).length;
+    if (it?.liabilities?.available)  anyLiabilities = true;
+    if (it?.investments?.available)  anyInvestments = true;
+    if (it?.recurring?.available)    anyRecurring   = true;
+  }
+  const pieces = [];
+  if (totalAccounts) pieces.push(`${totalAccounts} account${totalAccounts !== 1 ? 's' : ''}`);
+  if (totalTxns)     pieces.push(`${totalTxns} transaction${totalTxns !== 1 ? 's' : ''}`);
+  if (anyLiabilities) pieces.push('liabilities');
+  if (anyInvestments) pieces.push('investments');
+  if (anyRecurring)   pieces.push('recurring');
+
+  // If the per-product walker found nothing but the mapper produced any
+  // medium-or-higher-confidence fields, suppress the misleading suffix.
+  const haveMap = mapped && typeof mapped === 'object';
+  const anyConfidentMap = haveMap && Object.entries(mapped).some(
+    ([k, mf]) => k !== 'sources' && mf &&
+                 (mf.confidence === 'high' || mf.confidence === 'medium'));
+  const summary = pieces.length
+    ? pieces.join(' · ')
+    : (anyConfidentMap ? 'data prefilled' : 'no products available');
+
+  const json = JSON.stringify(data, null, 2);
+  statusEl.style.display = '';
+  statusEl.setAttribute('role', 'status');
+  // P4-H2 Bug #3 fix — the inline "Please review highlighted fields"
+  // line was removed. The top review banner (renderReviewBanner) is the
+  // single source of truth for needs-review fields. The inline copy used
+  // a low+medium filter while the banner uses low+missing, so they could
+  // disagree (e.g. S_ret medium for user_good produced an inline mention
+  // but no banner entry).
+  const fillLine = 'Add age, dependents, and retirement status below before calculating your score.';
+
+  // Phase 5a hotfix Part C — when 2+ banks are connected, the status
+  // line says "Connected to N banks" instead of "Connected to <last
+  // bank only>". Single-bank case stays as "Connected to <bank name>".
+  const _bankCount = itemSlices.length;
+  const _connectedTo = _bankCount > 1
+    ? `${_bankCount} banks`
+    : instName;
+  statusEl.innerHTML = `
+    <div style="color:var(--good-ink);font-weight:600;margin-bottom:4px">
+      Connected to ${_connectedTo} — ${summary}.
+    </div>
+    <div style="color:var(--text-secondary);font-size:13px;margin-bottom:8px;line-height:1.55">
+      ${haveMap ? 'Form prefilled from your bank data. ' : ''}${fillLine}
+    </div>
+    <details style="margin-top:6px">
+      <summary style="cursor:pointer;font-weight:600;color:var(--score-blue);font-size:13px">
+        View raw Plaid data
+      </summary>
+      <pre style="margin-top:8px;padding:12px;background:var(--bg-tint);
+                  border:1px solid var(--border);border-radius:8px;
+                  font-size:11px;line-height:1.4;max-height:360px;overflow:auto;
+                  white-space:pre-wrap;word-break:break-word"
+           role="region" aria-label="Raw Plaid response JSON">${
+             json.replace(/&/g,'&amp;').replace(/</g,'&lt;')
+           }</pre>
+    </details>`;
+}
+
+// ── Review banner (P4-4.3) ────────────────────────────────────────────
+// Appears only when at least one prefilled field has confidence "low" or
+// "missing". If everything came back high/medium, the inline confidence
+// badges suffice and the banner is omitted.
+//
+// Three edge-case copy paths replace the generic "please verify" text:
+//   • Single month of expense history     → "less than 3 months..."
+//   • No retirement / investment account  → "didn't find any..."
+//   • No spending detected                → "didn't see any spending..."
+const REVIEW_FIELD_LABELS = {
+  I_net:  'Monthly income',
+  E_ess:  'Monthly expenses',
+  S_liq:  'Liquid savings',
+  S_ret:  'Retirement savings',
+  D_hi:   'High-interest debt',
+  D_lo:   'Other debt',
+  D_min:  'Minimum debt payments',
+  // SB / FL extension fields — explicit labels so the review banner never
+  // falls back to raw snake_case keys for production fields.
+  business_lines_of_credit: 'Business lines of credit',
+  ar_aging_buckets:         'Accounts receivable aging',
+  ap_pending:               'Pending payables',
+  income_sources:           'Income sources',
+  income_volatility_observed: 'Income volatility',
+  months_of_income_history: 'Months of income history',
+};
+
+// Phase 6 polish (Pass 1, WI-3c) — humanize any snake_case field name
+// that isn't in REVIEW_FIELD_LABELS. Defensive fallback for new fields
+// added before a label is registered above.
+function _humanizeFieldName(key) {
+  if (!key) return '';
+  const spaced = String(key).replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+const REVIEW_FIELD_INPUT_ID = {
+  I_net: 'I_net', E_ess: 'E_ess', S_liq: 'S_liq', S_ret: 'S_ret',
+  D_hi:  'D_hi',  D_lo:  'D_lo',  D_min: 'D_min',
+};
+
+function _reviewItemCopy(field, mf) {
+  const conf = mf.confidence;
+  // Edge cases first
+  if (field === 'E_ess' && conf === 'low' &&
+      (mf.source || '').includes('recent_month')) {
+    return ('We have less than 3 months of your transaction history, so '
+          + 'the expense estimate is rough. If you\'ve banked here longer, '
+          + 'the data may catch up after a day or two.');
+  }
+  if (field === 'S_ret' && (conf === 'missing' || mf.value === 0 || mf.value === null)) {
+    return ('We didn\'t find any retirement or investment accounts at your '
+          + 'connected bank(s). If you have a 401(k) through your employer or '
+          + 'accounts at a different institution, add them manually or '
+          + 'connect that bank.');
+  }
+  if (field === 'E_ess' && (mf.value === 0) && conf === 'low') {
+    return ('We didn\'t see any spending at your connected bank(s). If you '
+          + 'spend from accounts at a different institution, please add your '
+          + 'monthly expenses manually or connect that bank.');
+  }
+  // Generic copy. I_net gets specialized variants since it's the field
+  // that most often triggers the banner (heuristic income on sandbox data).
+  if (field === 'I_net') {
+    if (conf === 'missing') return 'not detected — please add manually';
+    if (conf === 'low')     return 'estimated from deposits — please verify';
+  }
+  if (conf === 'missing') return 'not detected — please add manually';
+  return 'please verify (' + conf + ' confidence)';
+}
+
+let _reviewBannerDismissed = false;
+
+function renderReviewBanner(mapped, instCount) {
+  let banner = document.getElementById('plaid-review-banner');
+  if (_reviewBannerDismissed) {
+    if (banner) banner.remove();
+    return;
+  }
+  if (!mapped) return;
+
+  // Find low/missing fields (drop sources)
+  const flagged = Object.entries(mapped)
+    .filter(([k, v]) => k !== 'sources' && v &&
+                        (v.confidence === 'low' || v.confidence === 'missing'));
+  if (flagged.length === 0) {
+    if (banner) banner.remove();
+    return;
+  }
+
+  const anyMissing = flagged.some(([_, v]) => v.confidence === 'missing');
+  const heading = anyMissing
+    ? 'Please review and complete'
+    : 'Please review these values';
+  const bankWord = (instCount > 1) ? 'banks' : 'bank';
+  const subhead = `We pulled your financial data from ${instCount || 1} ${bankWord}. `
+                + 'A few values need a closer look before we calculate your score.';
+
+  const items = flagged.map(([field, mf]) => {
+    const label   = REVIEW_FIELD_LABELS[field] || _humanizeFieldName(field);
+    const inputId = REVIEW_FIELD_INPUT_ID[field] || field;
+    const copy    = _reviewItemCopy(field, mf);
+    return `
+      <li style="margin-bottom:6px">
+        <a href="#${inputId}"
+           data-target="${inputId}"
+           class="review-anchor"
+           style="color:var(--warn-ink);font-weight:600;text-decoration:underline">
+          ${label}
+        </a>
+        <span style="color:var(--text-secondary)">— ${copy}</span>
+      </li>`;
+  }).join('');
+
+  if (!banner) {
+    banner = document.createElement('section');
+    banner.id = 'plaid-review-banner';
+    banner.setAttribute('role', 'region');
+    banner.setAttribute('aria-label', 'Review prefilled values');
+    // Inserted between the Plaid card and the form card.
+    const plaidCard = document.getElementById('plaid-card');
+    plaidCard?.parentElement?.insertBefore(banner, plaidCard.nextSibling);
+  }
+  banner.style.cssText =
+    'background:var(--warn-soft);border:1px solid var(--warn-ink);' +
+    'border-radius:14px;padding:18px 22px;margin:14px 0;' +
+    'box-shadow:var(--card-shadow)';
+  banner.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div style="flex:1">
+        <h3 style="font-size:15px;font-weight:600;color:var(--warn-ink);margin:0 0 4px">
+          ${heading}
+        </h3>
+        <p style="font-size:13px;color:var(--text-secondary);margin:0 0 10px;line-height:1.5">
+          ${subhead}
+        </p>
+        <ul style="font-size:13px;line-height:1.5;margin:0;padding-left:18px">
+          ${items}
+        </ul>
+      </div>
+      <button type="button"
+              id="plaid-review-banner-dismiss"
+              aria-label="Dismiss review banner"
+              class="help-icon"
+              style="background:transparent;color:var(--warn-ink);border-color:transparent;
+                     font-size:16px;width:24px;height:24px;flex-shrink:0">×</button>
+    </div>`;
+  // Dismiss handler
+  banner.querySelector('#plaid-review-banner-dismiss')?.addEventListener('click', () => {
+    _reviewBannerDismissed = true;
+    banner.remove();
+  });
+  // Anchor links: scroll AND focus the input (anchor scroll alone doesn't focus).
+  // The input may be inside a collapsed <details> — open its ancestor first.
+  banner.querySelectorAll('.review-anchor').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = a.getAttribute('data-target');
+      const input = document.getElementById(id);
+      if (!input) return;
+      const det = input.closest('details');
+      if (det && !det.open) det.open = true;
+      input.scrollIntoView({behavior:'smooth', block:'center'});
+      setTimeout(() => input.focus({preventScroll: true}), 350);
+    });
+  });
+}
+
+// ── Multi-bank UI helpers ─────────────────────────────────────────────
+function renderConnectedBanksPills() {
+  const el = document.getElementById('plaid-connected');
+  if (!el) return;
+  if (!_plaidConnectedBanks.length) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+  el.style.display = '';
+  const pills = _plaidConnectedBanks.map((b, i) => `
+    <span role="listitem"
+          style="display:inline-flex;align-items:center;gap:6px;
+                 background:var(--good-soft);color:var(--good-ink);
+                 border:1px solid var(--border);border-radius:999px;
+                 padding:4px 6px 4px 12px;font-size:12px;font-weight:600;
+                 margin-right:8px;margin-bottom:6px;min-height:32px">
+      <span>${(b.name || 'Unknown bank').replace(/</g,'&lt;')}</span>
+      <button type="button"
+              class="help-icon"
+              tabindex="0" role="button"
+              aria-label="To disconnect this bank, close this tab or clear your browser session."
+              data-tip="To disconnect this bank, close this tab or clear your browser session. Disconnect support is coming in a future update."
+              style="margin-left:0;width:16px;height:16px;font-size:11px;
+                     background:transparent;color:var(--good-ink);
+                     border-color:transparent">×</button>
+    </span>`).join('');
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:600;color:var(--text-muted);
+                letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px">
+      Connected
+    </div>
+    ${pills}`;
+}
+
+function _updateConnectButtonLabel() {
+  const btn = document.getElementById('plaid-connect-btn');
+  if (!btn) return;
+  btn.textContent = _plaidConnectedBanks.length
+    ? 'Connect another bank'
+    : 'Connect bank (Sandbox)';
+}
+
+async function _runPlaidPrefillChain(publicToken, metadata, btn, origText, statusEl) {
+  const instName = metadata?.institution?.name || 'your bank';
+  const instId   = metadata?.institution?.institution_id || null;
+  const seq = ++_plaidMapSeq;
+
+  if (statusEl) {
+    statusEl.style.display = '';
+    statusEl.setAttribute('role', 'status');
+    statusEl.textContent = `Connecting to ${instName}…`;
+  }
+  try {
+    // 1) exchange public_token → item_id, scoped to this session.
+    const exRes = await fetch('/plaid/exchange', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({
+        public_token: publicToken,
+        institution:  { name: instName, institution_id: instId },
+        session_id:   PLAID_SESSION_ID,
+      }),
+    });
+    if (!exRes.ok) {
+      let msg = 'Could not exchange token; please reconnect.';
+      try { msg = (await exRes.json()).error || msg; } catch(_){}
+      throw new Error(msg);
+    }
+    const exData = await exRes.json();
+    const { item_id, superseded } = exData;
+
+    // Track the bank in the pill list. P4-H4 Fix #1 — same-institution
+    // dedupe: when the server reports `superseded > 0`, we re-connected
+    // to a bank already in the session. Plaid mints a fresh item_id per
+    // Link session, so the local array still holds the OLD item_id for
+    // that institution; replace it rather than appending a duplicate
+    // pill. Match on instId (Plaid institution_id) when available, else
+    // fall back to the human-readable name.
+    const existingIdx = _plaidConnectedBanks.findIndex(b =>
+      (instId && b.institution_id === instId) ||
+      (!instId && b.name === instName));
+    if (existingIdx >= 0) {
+      _plaidConnectedBanks[existingIdx] = { item_id, name: instName, institution_id: instId };
+    } else {
+      _plaidConnectedBanks.push({ item_id, name: instName, institution_id: instId });
+    }
+    renderConnectedBanksPills();
+
+    // 2) /plaid/map across the WHOLE session (every bank connected so far)
+    if (statusEl) statusEl.textContent = `Fetching and mapping data from ${instName}…`;
+    const mRes = await fetch('/plaid/map', {
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ session_id: PLAID_SESSION_ID }),
+    });
+    if (!mRes.ok) {
+      let msg = 'Connected, but data fetch failed; please retry.';
+      try { msg = (await mRes.json()).error || msg; } catch(_){}
+      throw new Error(msg);
+    }
+    const mapData = await mRes.json();
+
+    // Stale-response guard: only the latest sequence number wins.
+    if (seq !== _plaidMapSeq) {
+      console.debug('[plaid] discarding stale map response', seq, '->', _plaidMapSeq);
+      return;
+    }
+    console.log('[plaid] mapped payload', mapData);
+
+    prefillFormFromMap(mapData.mapped);
+
+    // Best-effort raw-data viewer
+    let rawData = null;
+    try {
+      const fRes = await fetch('/plaid/fetch', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ session_id: PLAID_SESSION_ID }),
+      });
+      if (fRes.ok) rawData = await fRes.json();
+    } catch(_){}
+
+    renderPlaidResult(instName, rawData || mapData, mapData.mapped, mapData);
+    renderReviewBanner(mapData.mapped, mapData.item_count || _plaidConnectedBanks.length);
+
+    document.querySelector('details.section[open]')?.scrollIntoView({behavior:'smooth', block:'start'});
+  } catch (e) {
+    console.warn('[plaid] prefill chain failed:', e);
+    if (statusEl) {
+      statusEl.style.display = '';
+      statusEl.setAttribute('role', 'alert');
+      statusEl.textContent = (e && e.message) ||
+        'Bank connection failed. The manual form below still works.';
+    }
+  } finally {
+    btn.disabled = false;
+    _updateConnectButtonLabel();
+  }
+}
+
+// ── Plaid Link integration (Sandbox) ──────────────────────────────────
+// Purely additive — never gates the manual form. The button fetches a
+// short-lived link_token from /plaid/link-token, hands it to Plaid Link,
+// and on success logs the public_token (P4-2 will exchange that for an
+// access_token and pull account data into the form).
+async function onPlaidConnectClick(){
+  const btn      = document.getElementById('plaid-connect-btn');
+  const statusEl = document.getElementById('plaid-status');
+  if (!btn) return;
+  // Disable + loading state
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = 'Loading…';
+  if (statusEl) { statusEl.style.display = 'none'; statusEl.textContent = ''; }
+
+  function reset(message) {
+    btn.disabled = false;
+    btn.textContent = origText;
+    if (message && statusEl) { statusEl.style.display = ''; statusEl.textContent = message; }
+  }
+
+  try {
+    const r = await fetch('/plaid/link-token', { method: 'POST', headers: authHeaders() });
+    if (!r.ok) {
+      let msg = 'Could not start Plaid Link. Please try again.';
+      try { msg = (await r.json()).error || msg; } catch(_){}
+      reset(msg);
+      return;
+    }
+    const { link_token } = await r.json();
+    if (!link_token) { reset('Plaid did not return a link token.'); return; }
+    if (typeof Plaid === 'undefined') {
+      reset('Plaid Link script failed to load. Check your network connection.');
+      return;
+    }
+    const handler = Plaid.create({
+      token: link_token,
+      onSuccess: async (publicToken, metadata) => {
+        // Queue the prefill chain so a fast double-connect doesn't
+        // interleave two prefills. Each entry waits for the previous.
+        _plaidMapPromise = _plaidMapPromise.then(() =>
+          _runPlaidPrefillChain(publicToken, metadata, btn, origText, statusEl)
+        );
+      },
+      onExit: (err, metadata) => {
+        if (err) { console.warn('[plaid] onExit error:', err); }
+        // Quietly re-enable; user closed the modal.
+        btn.disabled = false;
+        btn.textContent = origText;
+      },
+      onEvent: (eventName, metadata) => {
+        // Useful for telemetry but noisy — keep at debug only.
+        if (window.console && console.debug) console.debug('[plaid] event:', eventName);
+      },
+    });
+    handler.open();
+  } catch (e) {
+    console.warn('[plaid] connect failed:', e);
+    reset('Could not start Plaid Link. Please try again.');
+  }
+}
+
+async function loadProfileList(){
+  try{
+    const profiles = await (await fetch('/api/profiles')).json();
+    const sel = document.getElementById('profile-select');
+    profiles.forEach((p, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = p.name;
+      sel.appendChild(opt);
+    });
+  } catch(e){ console.warn('profile list failed:', e); }
+}
+async function onProfileSelect(idx){
+  if (idx === '') return;
+  const d = await (await fetch(`/api/profile/${idx}`)).json();
+  if (d.input){
+    // P4-H4 Fix #2 — archetype load resets the user-edited markers so the
+    // next Plaid sync's pre-pass treats archetype-supplied values as
+    // overwriteable defaults (not user-typed values to preserve).
+    INDIVIDUAL_INPUT_FORM_FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.dataset.userEdited = 'false';
+    });
+    document.getElementById('I_gross').value       = d.input.I_gross;
+    document.getElementById('I_net').value         = d.input.I_net;
+    document.getElementById('E_ess').value         = d.input.E_ess;
+    document.getElementById('E_house').value       = d.input.E_house;
+    document.getElementById('D_min').value         = d.input.D_min;
+    document.getElementById('D_hi').value          = d.input.D_hi;
+    document.getElementById('D_lo').value          = d.input.D_lo;
+    document.getElementById('S_liq').value         = d.input.S_liq;
+    document.getElementById('S_ret').value         = d.input.S_ret;
+    document.getElementById('age').value           = d.input.age;
+    document.getElementById('life_ins').checked    = !!d.input.has_life_insurance;
+    document.getElementById('disab_ins').checked   = !!d.input.has_disability_insurance;
+    document.getElementById('overdrafts').value    = d.input.overdraft_count_90d;
+    document.getElementById('late_payments').value = d.input.late_payment_count_90d;
+  }
+  refreshSummaries();
+  refreshComputeButtonGate();
+  renderResults(d);                               // auto-submit
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ── Compute ─────────────────────────────────────────────────────────
+function prevVal(id) {
+  const el = document.getElementById(id);
+  if (!el || el.value === '' || el.value === null) return null;
+  return +el.value;
+}
+
+function hasPreviousData() {
+  return ['prev_S_liq','prev_S_ret','prev_D_hi','prev_D_lo',
+          'prev_E_ess','prev_I_gross'].some(id => prevVal(id) !== null);
+}
+
+// Phase 5a hotfix Part B — missing-critical-inputs pre-check.
+//
+// Before computeScore runs the engine, verify the user has provided
+// the minimum needed for meaningful scoring. Missing critical inputs
+// previously fell through to the engine, which returned floor scores
+// (FHS=300/FSS=100/FRS=50) plus a hostile "TRIAGE MODE" badge — and
+// multi-bank made it worse, doubling the shortfall and punishing
+// users for connecting more data.
+//
+// This pre-check renders a calm "we need a bit more to score you"
+// state instead. Critical inputs: I_net (monthly take-home) and age.
+function _missingCriticalInputs() {
+  const missing = [];
+  const incomeRaw = (document.getElementById('I_net').value || '').trim();
+  if (incomeRaw === '' || +incomeRaw <= 0) {
+    missing.push({
+      id: 'I_net',
+      label: 'monthly take-home income',
+      hint: 'After taxes — what hits your bank account each month.',
+    });
+  }
+  const ageRaw = (document.getElementById('age').value || '').trim();
+  const ageNum = parseInt(ageRaw, 10);
+  if (ageRaw === '' || isNaN(ageNum) || ageNum < 18 || ageNum > 85) {
+    missing.push({
+      id: 'age',
+      label: 'your age',
+      hint: 'We use it to calibrate retirement and milestone targets.',
+    });
+  }
+  return missing;
+}
+
+function _renderMissingInputState(missing) {
+  const el = document.getElementById('results');
+  if (!el) return;
+  const items = missing.map(m => `
+    <li style="padding:10px 0; border-bottom:1px solid var(--border)">
+      <a href="#${m.id}" data-target="${m.id}" class="missing-input-anchor"
+         style="color:var(--score-blue); text-decoration:underline; font-weight:600; font-size:14px">
+        Add ${m.label}
+      </a>
+      <div style="color:var(--text-secondary); font-size:13px; margin-top:4px; line-height:1.5">
+        ${m.hint}
+      </div>
+    </li>`).join('');
+  el.innerHTML = `
+    <section class="card" style="margin-top:14px">
+      <div class="card-pad" style="padding:28px 22px">
+        <h3 class="panel-h3" style="font-size:17px; color:var(--text-primary); text-align:center; margin-bottom:6px">
+          We need a bit more to score you
+        </h3>
+        <p style="text-align:center; color:var(--text-secondary); margin:0 0 14px; line-height:1.5; font-size:14px">
+          A clean score relies on a few baseline numbers.
+          Add the field${missing.length > 1 ? 's' : ''} below and we'll run your scores.
+        </p>
+        <ul style="list-style:none; padding:0; margin:0; max-width:520px; margin-left:auto; margin-right:auto">
+          ${items}
+        </ul>
+      </div>
+    </section>`;
+  el.querySelectorAll('.missing-input-anchor').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = a.getAttribute('data-target');
+      const inp = document.getElementById(id);
+      if (!inp) return;
+      const det = inp.closest('details');
+      if (det && !det.open) det.open = true;
+      inp.scrollIntoView({behavior: 'smooth', block: 'center'});
+      setTimeout(() => inp.focus({preventScroll: true}), 350);
+    });
+  });
+}
+
+async function computeScore() {
+  // Phase 5a hotfix Part B: gate-with-grace. Don't disable the button
+  // (per brief), but on click verify critical inputs first; if any
+  // are missing, render a calm "need a bit more" state instead of
+  // running the engine and getting floor scores.
+  const missing = _missingCriticalInputs();
+  if (missing.length) {
+    _renderMissingInputState(missing);
+    document.getElementById('results').scrollIntoView(
+      {behavior: 'smooth', block: 'start'}
+    );
+    return;
+  }
+
+  const base = {
+    I_gross: v('I_gross'), I_net: v('I_net'),
+    E_ess: v('E_ess'), E_house: v('E_house'),
+    D_min: v('D_min'), D_hi: v('D_hi'), D_lo: v('D_lo'),
+    S_liq: v('S_liq'), S_ret: v('S_ret'),
+    age: v('age'),
+    has_life_insurance:       document.getElementById('life_ins').checked,
+    has_disability_insurance: document.getElementById('disab_ins').checked,
+    overdraft_count_90d:      v('overdrafts'),
+    late_payment_count_90d:   v('late_payments'),
+    name: 'User',
+    momentum_slope: 0.0,
+    streak_days: 0,
+    use_multiperiod: true,
+  };
+
+  let url = '/api/score';
+  let body = base;
+
+  if (hasPreviousData()) {
+    url = '/api/score/previous';
+    body = {
+      ...base,
+      prev_S_liq:   prevVal('prev_S_liq'),
+      prev_S_ret:   prevVal('prev_S_ret'),
+      prev_D_hi:    prevVal('prev_D_hi'),
+      prev_D_lo:    prevVal('prev_D_lo'),
+      prev_E_ess:   prevVal('prev_E_ess'),
+      prev_I_gross: prevVal('prev_I_gross'),
+    };
+  }
+
+  const d = await (await fetch(url, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  })).json();
+
+  renderResults(d);
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ── Render ──────────────────────────────────────────────────────────
+function fhsMarkerPct(fhs){ return Math.max(0, Math.min(100, ((fhs - 300) / 550) * 100)); }
+function fssMarkerPct(fss){ return Math.max(0, Math.min(100, fss)); }
+
+// ── Band-to-color map — text comes from the API (engine.fhs_band/fss_band/frs_band).
+// We never duplicate threshold logic here.
+const BAND_COLOR = {
+  // FHS bands
+  'Strong':     {bg:'var(--good-soft)',  fg:'var(--good-ink)'},
+  'Good':       {bg:'var(--good-soft)',  fg:'var(--good-ink)'},
+  'Watch':      {bg:'var(--warn-soft)',  fg:'var(--warn-ink)'},
+  'Weak':       {bg:'var(--bad-soft)',   fg:'var(--bad-ink)'},
+  // FSS bands
+  'Calm':       {bg:'var(--good-soft)',  fg:'var(--good-ink)'},
+  'Manageable': {bg:'var(--good-soft)',  fg:'var(--good-ink)'},
+  'Strained':   {bg:'var(--warn-soft)',  fg:'var(--warn-ink)'},
+  'Critical':   {bg:'var(--bad-soft)',   fg:'var(--bad-ink)'},
+  // FRS bands
+  'Improving':  {bg:'var(--good-soft)',  fg:'var(--good-ink)'},
+  'Holding':    {bg:'var(--warn-soft)',  fg:'var(--warn-ink)'},
+  'Declining':  {bg:'var(--bad-soft)',   fg:'var(--bad-ink)'},
+};
+function bandPill(band) {
+  if (!band) return '';
+  const c = BAND_COLOR[band] || {bg:'var(--bg-tint)', fg:'var(--text-secondary)'};
+  return `<span class="band-pill" aria-hidden="true"
+                 style="display:inline-block;font-size:11px;font-weight:600;
+                        padding:2px 8px;border-radius:8px;
+                        background:${c.bg};color:${c.fg};
+                        letter-spacing:.04em;text-transform:uppercase;
+                        margin-top:2px">${band}</span>`;
+}
+
+// Priority labels for recommendation cards — text equivalent for the
+// color-stripe left border.
+function priorityLabel(p) {
+  if (p <= 1) return 'High priority';
+  if (p <= 2) return 'Medium priority';
+  if (p <= 3) return 'Low priority';
+  return 'Suggestion';
+}
+function priorityCls(p) {
+  if (p <= 1) return 'score-red';
+  if (p <= 2) return 'score-amber';
+  return 'score-green';
+}
+
+// Phase 5a hotfix Part A — recommendation shape discriminator.
+//
+// Two recommendation shapes coexist in `d.recommendations`:
+//   • Legacy (engine.generate_recommendations): {action, reason,
+//     impact, priority (numeric 1-4), phases}
+//   • New-shape (recommendations.py, Phase 5a.4): {type, priority
+//     (string "primary"|"secondary"|"tertiary"), confidence, title,
+//     body, next_move, context}
+//
+// Discriminate by inspecting the rec object: a `title` + `body`
+// pair is new-shape; an `action` field is legacy. Both shapes route
+// through the same `.rec-card` CSS so visual treatment stays
+// consistent. Phase 7a normalises both into a single shape; until
+// then this discriminator is the single source of truth for the
+// rendering boundary.
+const _NEW_SHAPE_PRIORITY_TO_LEGACY = {
+  "primary":   1,   // → priority-1 styling (high)
+  "secondary": 2,   // → priority-2 (medium)
+  "tertiary":  3,   // → priority-3 (low)
+};
+
+function _isNewShapeRec(r) {
+  return r && typeof r === 'object'
+      && typeof r.title === 'string'
+      && typeof r.body  === 'string';
+}
+
+function renderRecommendationCard(r) {
+  if (_isNewShapeRec(r)) {
+    return _renderNewShapeRec(r);
+  }
+  return _renderLegacyRec(r);
+}
+
+function _renderNewShapeRec(r) {
+  // Map string priority → legacy numeric for CSS class reuse.
+  const numPriority = _NEW_SHAPE_PRIORITY_TO_LEGACY[r.priority] || 3;
+  const pLabel = priorityLabel(numPriority);
+  const pCls   = priorityCls(numPriority);
+  const pillBg = pCls === 'score-red'   ? 'var(--bad-soft)'
+               : pCls === 'score-amber' ? 'var(--warn-soft)'
+               :                           'var(--good-soft)';
+  const pillFg = pCls === 'score-red'   ? 'var(--bad-ink)'
+               : pCls === 'score-amber' ? 'var(--warn-ink)'
+               :                           'var(--good-ink)';
+  // Type → display label.  e.g. "data_completion" → "DATA COMPLETION"
+  const typeLabel = (r.type || '').replace(/_/g, ' ').toUpperCase();
+  // Confidence — replaces the legacy "IMPROVES X" badge content.
+  const confLabel = (r.confidence || 'medium').toUpperCase() + ' CONFIDENCE';
+  return `
+    <div class="rec-card priority-${numPriority}"
+         role="article"
+         aria-label="${pLabel}: ${r.title}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+        <span class="priority-pill" aria-hidden="true"
+              style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;
+                     letter-spacing:.05em;text-transform:uppercase;
+                     background:${pillBg};color:${pillFg}">
+          ${pLabel}
+        </span>
+      </div>
+      <div class="rec-action">${r.title}</div>
+      <div class="rec-reason">${r.body}</div>
+      ${r.next_move ? `
+        <div class="rec-reason"
+             style="margin-top:6px;font-style:italic;color:var(--text-muted)">
+          ${r.next_move}
+        </div>` : ''}
+      <div class="rec-meta">
+        <span class="rec-badge">${typeLabel}</span>
+        <span class="rec-priority">${confLabel}</span>
+      </div>
+    </div>`;
+}
+
+function _renderLegacyRec(r) {
+  const pLabel = priorityLabel(r.priority);
+  const pCls   = priorityCls(r.priority);
+  const pillBg = pCls === 'score-red'   ? 'var(--bad-soft)'
+               : pCls === 'score-amber' ? 'var(--warn-soft)'
+               :                           'var(--good-soft)';
+  const pillFg = pCls === 'score-red'   ? 'var(--bad-ink)'
+               : pCls === 'score-amber' ? 'var(--warn-ink)'
+               :                           'var(--good-ink)';
+  return `
+    <div class="rec-card priority-${r.priority}"
+         role="article"
+         aria-label="${pLabel}: ${r.action}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+        <span class="priority-pill" aria-hidden="true"
+              style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;
+                     letter-spacing:.05em;text-transform:uppercase;
+                     background:${pillBg};color:${pillFg}">
+          ${pLabel}
+        </span>
+      </div>
+      <div class="rec-action">${r.action}</div>
+      <div class="rec-reason">${r.reason}</div>
+      ${Array.isArray(r.phases) && r.phases.length > 1 ? `
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+          ${r.phases.map((p, i) => `
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary)">
+              <span style="flex-shrink:0;width:20px;height:20px;border-radius:50%;
+                           background:var(--accent-soft);color:var(--score-blue);
+                           display:flex;align-items:center;justify-content:center;
+                           font-size:10px;font-weight:700">${i + 1}</span>
+              <span>${p.description}</span>
+            </div>`).join('')}
+        </div>` : ''}
+      <div class="rec-meta">
+        <span class="rec-badge ${(r.impact||'').toLowerCase()}">Improves ${r.impact}</span>
+        <span class="rec-priority">Priority ${r.priority}</span>
+      </div>
+    </div>`;
+}
+// Inline SVG glyphs — no font dependency, so we never fall back to the
+// "□" or mis-rendered uppercase-U artifact some system fonts produce when
+// they lack the ↑/↓/→ Unicode codepoints.
+const FRS_SYM_UP   = `<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3 8l5-5 5 5"/></svg>`;
+const FRS_SYM_DOWN = `<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v10M3 8l5 5 5-5"/></svg>`;
+const FRS_SYM_FLAT = `<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>`;
+
+function frsState(frs, stateTraj, frsBand){
+  // Phase 6 polish (Pass 1, WI-2) — supplementary copy + arrow + color are
+  // derived from the FRS BAND (engine-computed via frs_band()), not from the
+  // multi-period LP trajectory. Prior behavior keyed off the trajectory and
+  // overrode the band, producing visual contradictions on profiles like fl4
+  // (FRS=35 DECLINING band) and fl6 (FRS=40 HOLDING band) where the LP plan
+  // showed improvement: the band pill said DECLINING/HOLDING but the
+  // supplementary arrow + copy said "Improving" with a green up-arrow.
+  // The band is the authoritative direction signal; supplementary copy must
+  // match it. Mapping: Strong/Improving → green ↑; Holding → amber →;
+  // Declining → red ↓. Falls back to numeric thresholds if band is missing.
+  const band = (frsBand || '').toLowerCase();
+  if (band === 'strong' || band === 'improving') {
+    return {cls:'up', sym: FRS_SYM_UP, label:'Improving',
+            desc:'Your plan is actively reducing debt or building savings.'};
+  }
+  if (band === 'holding') {
+    return {cls:'flat', sym: FRS_SYM_FLAT, label:'Holding steady',
+            desc:'Steady — coverage is stable but not yet building.'};
+  }
+  if (band === 'declining') {
+    return {cls:'down', sym: FRS_SYM_DOWN, label:'Declining',
+            desc:'Income trend is downward — focus on the next move below.'};
+  }
+  // Fallback: no band provided → numeric thresholds matching frs_band() in engine.py.
+  if (frs >= 55) return {cls:'up',   sym: FRS_SYM_UP,   label:'Improving',
+                         desc:'Your plan is actively reducing debt or building savings.'};
+  if (frs <  40) return {cls:'down', sym: FRS_SYM_DOWN, label:'Declining',
+                         desc:'Income trend is downward — focus on the next move below.'};
+  return         {cls:'flat', sym: FRS_SYM_FLAT, label:'Holding steady',
+                  desc:'Steady — coverage is stable but not yet building.'};
+}
+
+// ── Headline copy — a single human sentence interpreting the scores ────
+function buildHeadline(fhs, fss, frs){
+  let lead;
+  if      (fhs >= 750) lead = "You're in excellent shape — stronger than most.";
+  else if (fhs >= 650) lead = "You're on solid ground. A few moves could push you higher.";
+  else if (fhs >= 550) lead = "You're holding steady — there's real room to grow.";
+  else if (fhs >= 450) lead = "You're under some pressure, but the path forward is clear.";
+  else if (fhs >= 350) lead = "Things are tight right now. Small consistent steps will change this.";
+  else                 lead = "You're in a tough spot — but knowing your score is the first step.";
+  let tail = "";
+  if (fss > 60) tail += " Your strain is high — focus on the top recommendation first.";
+  // Phase 6 polish (Pass 1, WI-3a) — tagline branches on FRS direction so
+  // declining/holding profiles don't see "momentum is strong" copy that
+  // contradicts their FRS band pill.
+  if      (frs >= 70) tail += " Your momentum is strong — keep it going.";
+  else if (frs >= 55) tail += " Your momentum is positive — keep it going.";
+  else if (frs <  40) tail += " Your momentum has slipped — the next move below is where to start.";
+  return `<span class="emphasis">${lead}</span>${tail}`;
+}
+
+// ── 6-month trajectory chart (inline SVG) ─────────────────────────────
+function renderPhasePlan(phases, solver) {
+  if (!Array.isArray(phases) || phases.length === 0) return '';
+
+  const solverBadge = solver === 'multiperiod'
+    ? `<span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:10px;background:var(--good-soft);color:var(--good-ink);letter-spacing:.05em;text-transform:uppercase;margin-left:10px">6-month plan</span>`
+    : '';
+
+  const phaseColors = [
+    'var(--score-blue)',
+    'var(--score-green)',
+    'var(--score-amber)',
+    'var(--score-red)',
+  ];
+
+  const cards = phases.map((p, i) => {
+    const color = phaseColors[i % phaseColors.length];
+    return `
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:${color};color:#fff;
+                    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">
+          ${i + 1}
+        </div>
+        <div style="flex:1;padding-top:2px">
+          <div style="font-size:14px;font-weight:600;color:var(--text-primary)">${p.description}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:3px">${p.dominant}</div>
+        </div>
+        <div style="flex-shrink:0;font-size:15px;font-weight:600;color:var(--text-primary);
+                    font-variant-numeric:tabular-nums;padding-top:2px">
+          $${Math.round(p.amount).toLocaleString()}/mo
+        </div>
+      </div>`;
+  }).join('<div style="height:1px;background:var(--border);margin:14px 0 14px 50px"></div>');
+
+  return `
+    <section class="card" style="margin-top:18px">
+      <div class="card-pad">
+        <h3 class="panel-h3" style="display:flex;align-items:center">
+          Your 6-month plan${solverBadge}
+        </h3>
+        <div style="display:flex;flex-direction:column;gap:0;margin-top:4px">
+          ${cards}
+        </div>
+      </div>
+    </section>`;
+}
+
+function renderTrajectoryChart(traj){
+  if (!Array.isArray(traj) || traj.length !== 7) return '';
+  // Phase 6 polish (Pass 1, WI-4) — hide the chart when the trajectory is
+  // flat (e.g. Famine / LP-infeasible profiles where the engine emits a
+  // constant floor-score series). A horizontal line at 300 reads as
+  // "the plan does nothing" and is not useful surface in this state.
+  const tmin = Math.min(...traj), tmax = Math.max(...traj);
+  if (tmax - tmin < 1) return '';
+  const W = 500, H = 220;
+  const padL = 44, padR = 20, padT = 18, padB = 34;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  // Zoom the y-axis to the relevant window (±30 FHS points of the trajectory
+  // extrema) so modest improvements read as meaningful movement.
+  // Enforce a minimum 50-point visible Y-axis span so tiny deltas (e.g. a
+  // high-starting-FHS profile whose plan nudges +3) don't compress into a
+  // single-pixel line that reads as "the plan does nothing."
+  let yMax = Math.min(850, Math.max(...traj) + 30);
+  let yMin = Math.max(300, Math.min(...traj) - 30);
+  const MIN_SPAN = 50;
+  if (yMax - yMin < MIN_SPAN) {
+    const pad = (MIN_SPAN - (yMax - yMin)) / 2;
+    yMax = Math.min(850, yMax + pad);
+    yMin = Math.max(300, yMin - pad);
+    // If one edge clamped, re-expand the other to reach MIN_SPAN.
+    if (yMax - yMin < MIN_SPAN) {
+      if (yMax < 850) yMax = Math.min(850, yMin + MIN_SPAN);
+      else            yMin = Math.max(300, yMax - MIN_SPAN);
+    }
+  }
+  const yRange = Math.max(1, yMax - yMin);
+  const bottomY = padT + plotH;
+
+  const xAt = i => padL + (i / 6) * plotW;
+  const yAt = v => padT + ((yMax - v) / yRange) * plotH;
+
+  const pts = traj.map((v, i) => `${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`);
+  const linePoints = pts.join(' L ');
+  const areaPath   = `M ${pts[0]} L ${linePoints} L ${xAt(6).toFixed(1)},${bottomY.toFixed(1)} L ${xAt(0).toFixed(1)},${bottomY.toFixed(1)} Z`;
+  const dottedPath = `M ${pts[0]} L ${linePoints}`;
+
+  const labels = ['Now','1mo','2mo','3mo','4mo','5mo','6mo'];
+  const month6 = new Date();
+  month6.setMonth(month6.getMonth() + 6);
+  const monthName = month6.toLocaleString(undefined, {month:'long', year:'numeric'});
+
+  // Text alternative for screen readers — derived from the actual delta,
+  // not hardcoded. Trajectory of identical points reads as "holding steady."
+  const startVal = Math.round(traj[0]);
+  const endVal   = Math.round(traj[6]);
+  const trendDelta = endVal - startVal;
+  const trendDescriptor = trendDelta >  2 ? 'improving month over month'
+                       : trendDelta < -2 ? 'declining month over month'
+                       : 'holding steady';
+  const chartAria = `Projected score trajectory: starts at ${startVal}, ` +
+                    `reaches ${endVal} by ${monthName}, ${trendDescriptor}.`;
+
+  const dots = traj.slice(1).map((v, i) =>
+    `<circle cx="${xAt(i+1).toFixed(1)}" cy="${yAt(v).toFixed(1)}" r="3" class="traj-dot-future"/>`
+  ).join('');
+
+  return `
+    <section class="card trajectory-card">
+      <div class="card-pad">
+        <h3 class="panel-h3">Your projected trajectory</h3>
+        <svg viewBox="0 0 ${W} ${H}" class="trajectory-chart" role="img" aria-label="${chartAria.replace(/"/g,'&quot;')}" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="trajGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   style="stop-color:var(--score-green);stop-opacity:0.22"/>
+              <stop offset="100%" style="stop-color:var(--score-green);stop-opacity:0"/>
+            </linearGradient>
+          </defs>
+          <line x1="${padL}" x2="${padL + plotW}" y1="${yAt(yMax)}" y2="${yAt(yMax)}" class="gridline"/>
+          <line x1="${padL}" x2="${padL + plotW}" y1="${bottomY}"   y2="${bottomY}"   class="gridline"/>
+          <text x="${padL - 8}" y="${yAt(yMax) + 4}" class="axis-label" text-anchor="end">${Math.round(yMax)}</text>
+          <text x="${padL - 8}" y="${bottomY + 4}"   class="axis-label" text-anchor="end">${Math.round(yMin)}</text>
+          <path d="${areaPath}" fill="url(#trajGradient)"/>
+          <path d="${dottedPath}" class="traj-line"/>
+          <circle cx="${xAt(0).toFixed(1)}" cy="${yAt(traj[0]).toFixed(1)}" r="5" class="traj-dot-current"/>
+          ${dots}
+          ${labels.map((l,i) => `<text x="${xAt(i).toFixed(1)}" y="${bottomY + 18}" class="axis-label" text-anchor="middle">${l}</text>`).join('')}
+          <text x="${xAt(0).toFixed(1)}" y="${(yAt(traj[0]) - 10).toFixed(1)}" class="traj-value-label" text-anchor="middle">${Math.round(traj[0])}</text>
+          <text x="${xAt(6).toFixed(1)}" y="${(yAt(traj[6]) - 10).toFixed(1)}" class="traj-value-label" text-anchor="middle">${Math.round(traj[6])}</text>
+        </svg>
+        <p class="trajectory-caption">Following your plan, your score could reach <strong>${Math.round(traj[6])}</strong> by <strong>${monthName}</strong>.</p>
+        ${(Math.round(traj[6]) - Math.round(traj[0])) < 10 && Math.round(traj[0]) >= 600
+          ? `<p class="trajectory-caption" style="font-size:13px;color:var(--text-muted);margin-top:6px;font-style:italic">
+               Your score is already strong — the plan is preserving and building on that position.
+             </p>`
+          : ''}
+      </div>
+    </section>`;
+}
+
+// ── Count-up animation for the three score values ─────────────────────
+function animateScores(duration = 1500){
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  const nodes = Array.from(document.querySelectorAll('.gauge-value[data-target]')).map(el => ({
+    el,
+    start:  parseFloat(el.dataset.start)  || 0,
+    target: parseFloat(el.dataset.target) || 0,
+    kind:   el.dataset.kind,
+    marker: el.dataset.kind === 'fhs' ? document.getElementById('mk-fhs')
+          : el.dataset.kind === 'fss' ? document.getElementById('mk-fss')
+          : null,
+  }));
+  if (!nodes.length) return;
+  const t0 = performance.now();
+  function tick(now){
+    const t  = Math.min(1, (now - t0) / duration);
+    const e  = easeOut(t);
+    for (const n of nodes){
+      const val = n.start + (n.target - n.start) * e;
+      n.el.textContent = Math.round(val);
+      if (n.marker){
+        const pct = n.kind === 'fhs'
+          ? Math.max(0, Math.min(100, ((val - 300) / 550) * 100))
+          : Math.max(0, Math.min(100, val));
+        n.marker.style.left = pct + '%';
+      }
+    }
+    if (t < 1) requestAnimationFrame(tick);
+    else {
+      const hl = document.getElementById('headline');
+      if (hl) hl.classList.add('show');
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// ── Score history chart ──────────────────────────────────────────────
+// Design contract:
+//   - Y-axis: [recent_min − 20, recent_max + 20] where recent = last 20
+//     sessions. Minimum 60-point visible span.
+//   - X-axis: smart date labels (day / week / month) based on date span.
+//   - Tier zones: red 300–450, amber 450–600, green 600–850 at 0.06 opacity.
+//   - Hover/tap: per-dot tooltip with score, date, delta from previous.
+//   - <2 sessions: hide chart, show "history still building" placeholder.
+//   - Interpretation sentence rendered above the chart, server-produced.
+
+function formatHistoryDate(iso, spanDays) {
+  try {
+    const d = new Date(iso + 'T00:00:00');
+    if (spanDays > 90) return d.toLocaleString(undefined, {month:'short', year:'2-digit'});
+    if (spanDays > 14) {
+      // Week-of: show "Wk of Apr 1"
+      return 'Wk ' + d.toLocaleString(undefined, {month:'short', day:'numeric'});
+    }
+    return d.toLocaleString(undefined, {month:'short', day:'numeric'});
+  } catch(_) { return iso; }
+}
+
+function pickAxisTickIndices(n, maxTicks) {
+  if (n <= maxTicks) return Array.from({length:n}, (_, i) => i);
+  const step = (n - 1) / (maxTicks - 1);
+  const out = [];
+  for (let i=0; i<maxTicks; i++) out.push(Math.round(i * step));
+  return [...new Set(out)];
+}
+
+async function loadAndRenderHistory() {
+  try {
+    const fp = currentFingerprint();
+    // Debug trace: verify fingerprint isolation at the client. Match this
+    // log against /api/history's `fingerprint` echo to confirm the filter.
+    if (window.console && console.debug) {
+      console.debug('[history] fingerprint →', fp);
+    }
+    const resp = await fetch('/api/history?fingerprint=' + encodeURIComponent(fp),
+                             { headers: authHeaders() });
+    const data = await resp.json();
+    if (window.console && console.debug) {
+      console.debug('[history] server returned',
+                    (data.history || []).length, 'rows  · fp echo:', data.fingerprint);
+    }
+
+    const histEl = document.getElementById('history-section');
+    if (!histEl) return;
+
+    // Always clear the container first — stale chart from a previous profile
+    // must not leak into the current render.
+    histEl.innerHTML = '';
+
+    const rawHistory = data.history || [];
+
+    if (rawHistory.length < 2) {
+      const emptyAria = rawHistory.length === 0
+        ? 'No score history yet — this is your first scoring session.'
+        : 'Score history will appear after your second scoring session.';
+      // Placeholder card, consistent with the main card treatment.
+      histEl.innerHTML = `
+        <section class="card" style="margin-top:18px"
+                 role="region" aria-label="${emptyAria.replace(/"/g,'&quot;')}">
+          <div class="card-pad" style="text-align:center;padding-top:24px;padding-bottom:24px">
+            <div style="font-size:13px;font-weight:600;color:var(--text-secondary);
+                        letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px">
+              Score history
+            </div>
+            <p style="font-size:14px;color:var(--text-secondary);line-height:1.55;margin:0 auto;max-width:420px">
+              ${data.interpretation || "Your score history will appear here after your second session. Come back tomorrow."}
+            </p>
+          </div>
+        </section>`;
+      return;
+    }
+
+    // Chronological order (oldest → newest) — stats are easier this way.
+    const all = rawHistory.slice().reverse();
+    const recent = all.slice(-20);   // Y-axis bounds from last 20 sessions only.
+
+    // Y-axis: [min_recent − 20, max_recent + 20] with a 60-point minimum span.
+    const recentFhs = recent.map(s => s.fhs);
+    let yMax = Math.min(850, Math.max(...recentFhs) + 20);
+    let yMin = Math.max(300, Math.min(...recentFhs) - 20);
+    const MIN_SPAN = 60;
+    if (yMax - yMin < MIN_SPAN) {
+      const pad = (MIN_SPAN - (yMax - yMin)) / 2;
+      yMax = Math.min(850, yMax + pad);
+      yMin = Math.max(300, yMin - pad);
+      if (yMax - yMin < MIN_SPAN) {
+        if (yMax < 850) yMax = Math.min(850, yMin + MIN_SPAN);
+        else            yMin = Math.max(300, yMax - MIN_SPAN);
+      }
+    }
+    const yRange = Math.max(1, yMax - yMin);
+
+    const W = 560, H = 200;
+    const padL = 46, padR = 18, padT = 18, padB = 40;
+    const plotW = W - padL - padR;
+    const plotH = H - padT - padB;
+    const bottomY = padT + plotH;
+    const n = all.length;
+
+    const xAt = i => padL + (i / Math.max(1, n - 1)) * plotW;
+    const yAt = v => padT + ((yMax - v) / yRange) * plotH;
+
+    // Date span (first to last) → decides label format.
+    let spanDays = 0;
+    try {
+      const d0 = new Date(all[0].scored_at + 'T00:00:00');
+      const dN = new Date(all[n-1].scored_at + 'T00:00:00');
+      spanDays = Math.round((dN - d0) / (1000*60*60*24));
+    } catch(_) { spanDays = n; }
+
+    // Pick 4–5 evenly spaced label indices so we don't crowd the axis.
+    const tickCount = Math.min(5, n);
+    const tickIndices = pickAxisTickIndices(n, tickCount);
+
+    // Tier zones clipped to the current [yMin, yMax] window.
+    const zones = [
+      {from: 300, to: 450, color: 'var(--score-red)'},
+      {from: 450, to: 600, color: 'var(--score-amber)'},
+      {from: 600, to: 850, color: 'var(--score-green)'},
+    ].map(z => {
+      const hi = Math.min(z.to,   yMax);
+      const lo = Math.max(z.from, yMin);
+      if (hi <= lo) return '';
+      const y1 = yAt(hi), y2 = yAt(lo);
+      return `<rect x="${padL}" y="${y1.toFixed(1)}"
+                     width="${plotW}" height="${(y2 - y1).toFixed(1)}"
+                     fill="${z.color}" opacity="0.06"/>`;
+    }).join('');
+
+    const pts = all.map((s, i) => `${xAt(i).toFixed(1)},${yAt(s.fhs).toFixed(1)}`);
+    const linePath = 'M ' + pts.join(' L ');
+    const areaPath = linePath + ` L ${xAt(n-1).toFixed(1)},${bottomY} L ${xAt(0).toFixed(1)},${bottomY} Z`;
+
+    // Dots carry data- attributes; JS wires up hover/tap after insertion.
+    const dots = all.map((s, i) => {
+      const prev = i > 0 ? all[i-1].fhs : null;
+      const delta = prev === null ? null : (s.fhs - prev);
+      return `<circle class="hist-dot" cx="${xAt(i).toFixed(1)}" cy="${yAt(s.fhs).toFixed(1)}" r="5"
+        fill="var(--score-blue)" stroke="var(--bg-card)" stroke-width="1.5"
+        tabindex="0"
+        data-fhs="${s.fhs}" data-date="${s.scored_at}"
+        data-delta="${delta === null ? '' : delta}"
+        style="cursor:pointer"/>`;
+    }).join('');
+
+    const xAxisTicks = tickIndices.map(i => {
+      const label = i === n - 1 ? 'Today' : formatHistoryDate(all[i].scored_at, spanDays);
+      return `<text x="${xAt(i).toFixed(1)}" y="${bottomY+18}"
+        font-size="11" fill="var(--text-muted)" text-anchor="middle"
+        font-family="inherit">${label}</text>`;
+    }).join('');
+
+    // Text alternative for screen readers — built from actual data points.
+    const histStart = all[0].fhs;
+    const histEnd   = all[n-1].fhs;
+    const histDelta = histEnd - histStart;
+    const histTrend = histDelta >  3 ? 'trending up'
+                    : histDelta < -3 ? 'trending down'
+                    : 'holding steady';
+    const histAria = `Score history over ${all.length} session${all.length !== 1 ? 's' : ''}: ` +
+                     `starts at ${histStart}, latest is ${histEnd}, ${histTrend}.`;
+
+    histEl.innerHTML = `
+      <section class="card" style="margin-top:18px"
+               role="region" aria-label="Score history">
+        <div class="card-pad">
+          <h3 class="panel-h3" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            Score history
+            <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;
+                         background:var(--accent-soft);color:var(--score-blue)">
+              ${all.length} session${all.length !== 1 ? 's' : ''} · ${data.streak_days}-day streak
+            </span>
+          </h3>
+          <p style="font-size:14px;color:var(--text-secondary);line-height:1.5;
+                    margin:4px 0 4px;max-width:560px">
+            ${data.interpretation || ''}
+          </p>
+          <div style="position:relative;max-width:640px;margin:8px auto 0">
+            <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${histAria.replace(/"/g,'&quot;')}" style="width:100%;height:auto;display:block;overflow:visible">
+              <defs>
+                <linearGradient id="histGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   style="stop-color:var(--score-blue);stop-opacity:0.18"/>
+                  <stop offset="100%" style="stop-color:var(--score-blue);stop-opacity:0"/>
+                </linearGradient>
+              </defs>
+              ${zones}
+              <line x1="${padL}" x2="${padL+plotW}" y1="${yAt(yMax).toFixed(1)}" y2="${yAt(yMax).toFixed(1)}"
+                    stroke="var(--border)" stroke-width="1"/>
+              <line x1="${padL}" x2="${padL+plotW}" y1="${bottomY}" y2="${bottomY}"
+                    stroke="var(--border)" stroke-width="1"/>
+              <text x="${padL-8}" y="${yAt(yMax)+4}" font-size="11" fill="var(--text-muted)"
+                    text-anchor="end" font-family="inherit">${Math.round(yMax)}</text>
+              <text x="${padL-8}" y="${bottomY+4}" font-size="11" fill="var(--text-muted)"
+                    text-anchor="end" font-family="inherit">${Math.round(yMin)}</text>
+              <path d="${areaPath}" fill="url(#histGradient)"/>
+              <path d="${linePath}" fill="none" stroke="var(--score-blue)"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              ${dots}
+              ${xAxisTicks}
+            </svg>
+            <div id="hist-tooltip" style="position:absolute;pointer-events:none;
+                 background:var(--bg-card);color:var(--text-primary);
+                 border:1px solid var(--border);border-radius:8px;
+                 padding:8px 12px;font-size:12px;line-height:1.4;
+                 box-shadow:var(--card-shadow);white-space:nowrap;
+                 opacity:0;transition:opacity .12s ease;z-index:2"></div>
+          </div>
+        </div>
+      </section>`;
+
+    // Wire up tooltip for each dot (hover = desktop, focus/click = touch).
+    const tooltip = document.getElementById('hist-tooltip');
+    const svg = histEl.querySelector('svg');
+    const show = (dot) => {
+      const fhs = dot.getAttribute('data-fhs');
+      const dateStr = dot.getAttribute('data-date');
+      const deltaRaw = dot.getAttribute('data-delta');
+      // Tooltip always shows the actual date — year-abbreviated formats are
+      // ambiguous in this context ("Apr 26" reads as day 26, not 2026).
+      let niceDate = dateStr;
+      try {
+        niceDate = new Date(dateStr + 'T00:00:00')
+          .toLocaleString(undefined, {month:'short', day:'numeric', year:'numeric'});
+      } catch(_) {}
+      let deltaLine = '';
+      if (deltaRaw !== '') {
+        const d = Number(deltaRaw);
+        const sign = d > 0 ? '+' : '';
+        const color = d > 0 ? 'var(--good-ink)' : d < 0 ? 'var(--bad-ink)' : 'var(--text-muted)';
+        deltaLine = `<div style="color:${color};margin-top:2px">${sign}${d} since last session</div>`;
+      } else {
+        deltaLine = `<div style="color:var(--text-muted);margin-top:2px">First session</div>`;
+      }
+      tooltip.innerHTML = `
+        <div style="font-weight:600;font-size:14px">${fhs}</div>
+        <div style="color:var(--text-secondary)">${niceDate}</div>
+        ${deltaLine}`;
+      // Position relative to dot center within the SVG's client box.
+      const rect = dot.getBoundingClientRect();
+      const parent = tooltip.parentElement.getBoundingClientRect();
+      const tipW = tooltip.offsetWidth;
+      const left = rect.left + rect.width/2 - parent.left - tipW/2;
+      const top  = rect.top - parent.top - tooltip.offsetHeight - 8;
+      tooltip.style.left = Math.max(8, left) + 'px';
+      tooltip.style.top  = top + 'px';
+      tooltip.style.opacity = '1';
+    };
+    const hide = () => { tooltip.style.opacity = '0'; };
+
+    histEl.querySelectorAll('.hist-dot').forEach(dot => {
+      dot.addEventListener('mouseenter', () => show(dot));
+      dot.addEventListener('mouseleave', hide);
+      dot.addEventListener('focus',      () => show(dot));
+      dot.addEventListener('blur',       hide);
+      dot.addEventListener('click',      (e) => { e.stopPropagation(); show(dot); });
+    });
+    // Tap outside to dismiss on mobile.
+    document.addEventListener('click', hide, {once: true, capture: true});
+  } catch(e) { console.warn('history load failed:', e); }
+}
+
+function normalizeResponse(d) {
+  // Already flat (legacy /api/profile shape) — promote to unified shape.
+  if (typeof d.fhs === 'number') {
+    return {
+      fhs: d.fhs,
+      fss: d.fss,
+      frs: d.frs,
+      fhs_breakdown: d.fhs_breakdown,
+      fss_breakdown: d.fss_breakdown,
+      frs_breakdown: d.frs_breakdown,
+      optimal_allocation: d.optimal_allocation,
+      actual_vs_optimal: d.actual_vs_optimal,
+      recommendations: d.recommendations,
+      insights: d.insights,
+      trajectory: d.trajectory,
+      plan_phases: d.plan_phases || [],
+      state_trajectory: d.state_trajectory || [],
+      solver: d.lp_solver || 'single_period',
+      infeasible: d.infeasible,
+      infeasibility_reason: d.infeasibility_reason,
+      streak_days: d.streak_days || 0,
+      income_shortfall: d.income_shortfall || null,
+      fhs_band: d.fhs_band || null,
+      fss_band: d.fss_band || null,
+      frs_band: d.frs_band || null,
+    };
+  }
+  // Nested shape from /api/score
+  return {
+    fhs: d.scores?.fhs,
+    fss: d.scores?.fss,
+    frs: d.scores?.frs,
+    fhs_breakdown: d.breakdowns?.fhs,
+    fss_breakdown: d.breakdowns?.fss,
+    frs_breakdown: d.breakdowns?.frs,
+    optimal_allocation: d.optimal_allocation,
+    actual_vs_optimal: d.actual_vs_optimal,
+    recommendations: d.recommendations,
+    insights: d.insights,
+    trajectory: d.trajectory,
+    plan_phases: d.plan?.plan_phases || [],
+    state_trajectory: d.plan?.state_trajectory || [],
+    solver: d.meta?.solver || 'single_period',
+    infeasible: d.meta?.infeasible,
+    infeasibility_reason: d.meta?.infeasibility_reason,
+    streak_days: d.meta?.streak_days || 0,
+    income_shortfall: d.meta?.income_shortfall || null,
+    fhs_band: d.scores?.fhs_band || null,
+    fss_band: d.scores?.fss_band || null,
+    frs_band: d.scores?.frs_band || null,
+  };
+}
+
+function renderResults(d){
+  d = normalizeResponse(d);
+  const el = document.getElementById('results');
+  el.classList.remove('hidden');
+  const frs = frsState(d.frs, d.state_trajectory, d.frs_band);
+
+  let h = `
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="gauge" role="group"
+           aria-label="Financial Health score: ${d.fhs} out of 850, in the ${d.fhs_band || ''} range">
+        <span class="gauge-label" title="${TIPS['Financial Health Score']}">Your financial health</span>
+        <span class="gauge-sublabel">FHS</span>
+        <span class="gauge-value" id="gv-fhs" data-target="${d.fhs}" data-start="300" data-kind="fhs">300</span>
+        ${bandPill(d.fhs_band)}
+        <div class="meter fhs" aria-hidden="true"><div class="meter-marker" id="mk-fhs" style="left:0%"></div></div>
+        <div class="meter-scale" aria-hidden="true"><span>300</span><span>575</span><span>850</span></div>
+        <span class="gauge-sub">Range 300–850 · higher is better</span>
+      </div>
+      <div class="gauge" role="group"
+           aria-label="Stress Level score: ${d.fss} out of 100, ${d.fss_band || ''} (lower is better)">
+        <span class="gauge-label" title="${TIPS['Financial Strain Score']}">Your stress level</span>
+        <span class="gauge-sublabel">FSS</span>
+        <span class="gauge-value" id="gv-fss" data-target="${d.fss}" data-start="0" data-kind="fss">0</span>
+        ${bandPill(d.fss_band)}
+        <div class="meter fss" aria-hidden="true"><div class="meter-marker" id="mk-fss" style="left:0%"></div></div>
+        <div class="meter-scale" aria-hidden="true"><span>0</span><span>50</span><span>100</span></div>
+        ${d.fss >= 90
+          ? `<span style="font-size:12px;font-weight:600;color:var(--bad-ink);margin-top:4px">
+               High strain — but every item here is fixable
+             </span>`
+          : d.fss >= 75
+          ? `<span style="font-size:12px;font-weight:600;color:var(--warn-ink);margin-top:4px">
+               Elevated — but we've found your first move
+             </span>`
+          : ''}
+        <span class="gauge-sub">Range 0–100 · lower is better</span>
+      </div>
+      <div class="gauge" role="group"
+           aria-label="Momentum score: ${d.frs} out of 100, ${frs.label} — ${frs.desc}">
+        <span class="gauge-label" title="${TIPS['Financial Recovery Score']}">Your momentum</span>
+        <span class="gauge-sublabel">FRS</span>
+        <span class="gauge-value" id="gv-frs" data-target="${d.frs}" data-start="0" data-kind="frs">0</span>
+        ${bandPill(d.frs_band)}
+        <div class="frs-indicator" aria-hidden="true">
+          <div class="frs-arrow ${frs.cls}">${frs.sym}</div>
+          <div class="frs-trend">
+            <span class="label">${frs.label}</span>
+            <span class="desc">${frs.desc}</span>
+          </div>
+        </div>
+        ${d.frs_breakdown?.source === 'real_snapshot'
+          ? `<span style="font-size:11px;font-weight:600;padding:2px 9px;border-radius:8px;
+                          background:var(--good-soft);color:var(--good-ink);
+                          margin-top:6px;display:inline-block">
+               Based on your actual 30-day data
+             </span>`
+          : `<span style="font-size:11px;color:var(--text-muted);margin-top:6px;display:inline-block">
+               Based on plan projection
+             </span>`}
+        <span class="gauge-sub">Range 0–100 · trend over 30 days</span>
+      </div>
+    </div>
+    <div class="headline" id="headline">${buildHeadline(d.fhs, d.fss, d.frs)}</div>
+    ${(() => {
+       // Phase 5a hotfix Part B — rewrite the infeasibility / shortfall
+       // line in brand-voice-compliant copy. The engine emits the raw
+       // "Income cannot cover minimum obligations. Disposable = $-X/mo,
+       // Min discretionary = $0/mo." for LP-infeasible cases; here we
+       // soften it. The income_shortfall object (set by engine when LP
+       // succeeded but I_net - E_ess - D_min < 0) carries a precise
+       // shortfall amount; prefer that when available.
+       const sf = d.income_shortfall;
+       const reason = d.infeasibility_reason;
+       if (sf && typeof sf.amount === 'number' && sf.amount > 0) {
+         const amt = Math.round(sf.amount);
+         return `<div class="infeasible" style="text-align:left">
+           Your income doesn't quite cover your essential obligations —
+           about $${amt.toLocaleString()}/mo short.
+           The plan below focuses on the most actionable next move.
+         </div>`;
+       }
+       if (d.infeasible && reason) {
+         return `<div class="infeasible">${reason}</div>`;
+       }
+       return '';
+    })()}
+    ${(() => {
+       // Phase 5a hotfix Part B — "TRIAGE MODE" badge removed.
+       // The word violates brand voice (alarmist). Phase 7a will
+       // redesign this entire status surface; for now, no badge.
+       // Multi-period plan active badge stays — it's a neutral
+       // mechanical status, not an emotional one.
+       if (d.solver === 'multiperiod' && !d.income_shortfall) {
+         return `<div style="text-align:center;margin-top:14px">
+           <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;
+                        background:var(--accent-soft);color:var(--score-blue);
+                        letter-spacing:.05em;text-transform:uppercase">
+             Multi-period plan active
+           </span>
+         </div>`;
+       }
+       return '';
+    })()}
+    ${(d.streak_days > 0 && !d.income_shortfall)
+      ? `<div style="text-align:center;margin-top:8px">
+           <span style="font-size:12px;font-weight:600;padding:3px 12px;border-radius:10px;
+                        background:var(--warn-soft);color:var(--warn-ink);letter-spacing:.03em">
+             🔥 ${d.streak_days}-day streak
+           </span>
+         </div>`
+      : ''}
+  </section>
+
+  ${renderTrajectoryChart(d.trajectory)}
+  ${renderPhasePlan(d.plan_phases, d.solver)}
+
+  <div class="results-grid">
+    <!-- LEFT column: breakdowns -->
+    <div class="stack">
+      <section class="card">
+        <div class="card-pad">
+          <h3 class="panel-h3">FHS breakdown</h3>
+          <div class="bars">
+            ${Object.entries(d.fhs_breakdown || {})
+              .filter(([k]) => !k.startsWith('_') && !UI_HIDDEN_BREAKDOWN_KEYS.has(k))
+              .map(([k,v]) => {
+                const pct = Math.round((v.score || 0) * 100);
+                const color = pct > 70 ? 'var(--score-green)' : pct > 40 ? 'var(--score-amber)' : 'var(--score-red)';
+                const insight = d.insights?.fhs?.[k];
+                const label = uiLabel(k);
+                return `<div class="bar-row">
+                  <span class="bar-label">${label}${helpIcon(k)}</span>
+                  <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+                  <span class="bar-val">${pct}%</span>
+                  ${insight ? `<div class="insight">${insight}</div>` : ''}
+                </div>`;
+              }).join('')}
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-pad">
+          <h3 class="panel-h3">FSS breakdown</h3>
+          <div class="bars">
+            ${Object.entries(d.fss_breakdown || {})
+              .filter(([k]) => !k.startsWith('_') && !UI_HIDDEN_BREAKDOWN_KEYS.has(k))
+              .map(([k,v]) => {
+                // §11.1 — `weighted` was the per-dim contribution to FSS
+                // and was a trade-secret leak (combined with `pla` in the
+                // same dict it lets the consumer reverse-engineer the
+                // weight). Replaced by `contribution_pct`, normalized
+                // 0–100 so dims sum to ~100 across the breakdown.
+                // Reveals relative ranking, not absolute weights.
+                const pct = Math.round(v.contribution_pct || 0);
+                const color = pct > 30 ? 'var(--score-red)' : pct > 15 ? 'var(--score-amber)' : 'var(--score-green)';
+                const insight = d.insights?.fss?.[k];
+                const label = uiLabel(k);
+                return `<div class="bar-row">
+                  <span class="bar-label">${label}${helpIcon(k)}</span>
+                  <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+                  <span class="bar-val">${pct}%</span>
+                  ${insight ? `<div class="insight">${insight}</div>` : ''}
+                </div>`;
+              }).join('')}
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT column: actions + allocation -->
+    <div class="stack">
+      ${Array.isArray(d.recommendations) && d.recommendations.length ? `
+      <section class="card">
+        <div class="card-pad">
+          <h3 class="panel-h3">Recommended actions</h3>
+          <div class="recs">
+            ${d.recommendations.map(r => renderRecommendationCard(r)).join('')}
+          </div>
+        </div>
+      </section>` : ''}
+
+      ${(() => {
+        // Phase 6 polish (Pass 1, WI-4) — suppress the allocation +
+        // milestones card when both surfaces are empty (e.g. Famine /
+        // LP-infeasible profiles where the engine produces neither an
+        // allocation plan nor milestone state). Returning '__SUPPRESS__'
+        // here triggers the wrapping conditional below to omit the card.
+        const alloc = d.optimal_allocation || {};
+        const milestonesDetail = d.actual_vs_optimal?.milestones_detail;
+        const milestonesLegacy = d.actual_vs_optimal?.milestones_achieved;
+        const hasAlloc = Object.keys(alloc).length > 0;
+        const hasMilestones =
+          (Array.isArray(milestonesDetail) && milestonesDetail.length > 0) ||
+          (milestonesLegacy && Object.keys(milestonesLegacy).length > 0);
+        window.__suppressAllocCard = !hasAlloc && !hasMilestones;
+        window.__hideAlloc = !hasAlloc;
+        window.__hideMilestones = !hasMilestones;
+        return '';
+      })()}
+      ${window.__suppressAllocCard ? '' : `
+      <section class="card">
+        <div class="card-pad">
+          ${window.__hideAlloc ? '' : `
+          <h3 class="panel-h3">Recommended monthly allocation</h3>
+          <table class="alloc-table">
+            <tr><th>Category</th><th class="amt">Per month</th></tr>
+            ${Object.entries(d.optimal_allocation || {}).map(([k,v]) => {
+              const stripped = k.replace(/^x\d_/, '');
+              const ALLOC_LABELS = {
+                "ef_savings": "Emergency fund",
+                "retirement": "Retirement savings",
+                "hi_debt_paydown": "High-interest debt",
+                "lo_debt_paydown": "Other debt",
+                "discretionary": "Discretionary spending",
+                "investment": "Investments",
+              };
+              const label = ALLOC_LABELS[stripped] || stripped.replace(/_/g,' ');
+              return `<tr><td>${label}</td><td class="amount">${fmt(v)}</td></tr>`;
+            }).join('')}
+          </table>`}
+          ${window.__hideMilestones ? '' : `
+          <h3 class="panel-h3" style="${window.__hideAlloc ? '' : 'margin-top:18px'}">Milestones</h3>
+          <div class="milestones" role="list">
+            ${(() => {
+              // Prefer the engine's structured milestones_detail (3-state) when
+              // available; otherwise fall back to the legacy dict (2-state).
+              const detail = d.actual_vs_optimal?.milestones_detail;
+              if (Array.isArray(detail) && detail.length) {
+                return detail.map(m => {
+                  const labelLower = m.label.toLowerCase();
+                  if (m.applicability === 'not_applicable') {
+                    const reason = m.applicability_reason || 'Not applicable at your life stage.';
+                    return `<span class="milestone na" role="listitem"
+                      tabindex="0" title="${reason.replace(/"/g,'&quot;')}"
+                      aria-label="${labelLower}: not applicable. ${reason.replace(/"/g,'&quot;')}">— ${labelLower}</span>`;
+                  }
+                  if (m.applicability === 'done') {
+                    return `<span class="milestone achieved" role="listitem"
+                      aria-label="${labelLower}: achieved">✓ ${labelLower}</span>`;
+                  }
+                  return `<span class="milestone missed" role="listitem"
+                      aria-label="${labelLower}: not yet achieved">○ ${labelLower}</span>`;
+                }).join('');
+              }
+              // Legacy 2-state fallback
+              return Object.entries(d.actual_vs_optimal?.milestones_achieved || {}).map(([k,v]) => {
+                const label = k.replace(/y\d_/, '').replace(/_/g,' ');
+                return `<span class="milestone ${v ? 'achieved' : 'missed'}" role="listitem"
+                  aria-label="${label}: ${v ? 'achieved' : 'not yet achieved'}">${v ? '✓' : '○'} ${label}</span>`;
+              }).join('');
+            })()}
+          </div>`}
+        </div>
+      </section>`}
+    </div>
+  </div>`;
+
+  el.innerHTML = h;
+  // Kick off the score count-up on the next frame so the gradient meters have
+  // painted before we start moving markers.
+  requestAnimationFrame(() => animateScores());
+  loadAndRenderHistory();
+}
+</script>
+</body>
+</html>

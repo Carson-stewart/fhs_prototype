@@ -1,0 +1,261 @@
+{
+  "session_id": "sess_user_good_fixture",
+  "items": [
+    {
+      "item_id": "item_user_good",
+      "institution_name": "First Platypus Bank",
+      "fetched_at": "2026-05-01T00:00:00Z",
+      "accounts": {
+        "available": true,
+        "data": {
+          "accounts": [
+            {
+              "account_id": "acct_checking",
+              "name": "Plaid Checking",
+              "official_name": "Plaid Gold Standard 0% Interest Checking",
+              "type": "depository",
+              "subtype": "checking",
+              "holder_category": "personal",
+              "balances": {"current": 110.00, "available": 100.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_savings",
+              "name": "Plaid Saving",
+              "type": "depository",
+              "subtype": "savings",
+              "holder_category": "personal",
+              "balances": {"current": 210.00, "available": 200.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_money_market",
+              "name": "Plaid Money Market",
+              "type": "depository",
+              "subtype": "money market",
+              "holder_category": "personal",
+              "balances": {"current": 61269.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_cd",
+              "name": "Plaid CD",
+              "type": "depository",
+              "subtype": "cd",
+              "holder_category": "personal",
+              "balances": {"current": 1000.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_cc_personal",
+              "name": "Plaid Credit Card",
+              "type": "credit",
+              "subtype": "credit card",
+              "holder_category": "personal",
+              "balances": {"current": 410.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_cc_business",
+              "name": "Plaid Business Credit Card",
+              "type": "credit",
+              "subtype": "credit card",
+              "holder_category": "business",
+              "balances": {"current": 5020.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_ira",
+              "name": "Plaid IRA",
+              "type": "investment",
+              "subtype": "ira",
+              "holder_category": "personal",
+              "balances": {"current": 20946.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_401k",
+              "name": "Plaid 401k",
+              "type": "investment",
+              "subtype": "401k",
+              "holder_category": "personal",
+              "balances": {"current": 3006.76, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_student",
+              "name": "Plaid Student Loan",
+              "type": "loan",
+              "subtype": "student",
+              "balances": {"current": 65262.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_mortgage",
+              "name": "Plaid Mortgage",
+              "type": "loan",
+              "subtype": "mortgage",
+              "balances": {"current": 56302.06, "iso_currency_code": "USD"}
+            }
+          ],
+          "request_id": "sanitized"
+        }
+      },
+      "transactions": {
+        "available": true,
+        "data": [
+          {
+            "transaction_id": "txn_gusto_apr",
+            "account_id": "acct_checking",
+            "amount": 5850.00,
+            "date": "2026-04-15",
+            "name": "GUSTO PAY",
+            "personal_finance_category": {"primary": "TRANSFER_OUT", "detailed": "TRANSFER_OUT_DEPOSIT"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_gusto_mar",
+            "account_id": "acct_checking",
+            "amount": 5850.00,
+            "date": "2026-03-15",
+            "name": "GUSTO PAY",
+            "personal_finance_category": {"primary": "TRANSFER_OUT", "detailed": "TRANSFER_OUT_DEPOSIT"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_gusto_feb",
+            "account_id": "acct_checking",
+            "amount": 5850.00,
+            "date": "2026-02-15",
+            "name": "GUSTO PAY",
+            "personal_finance_category": {"primary": "TRANSFER_OUT", "detailed": "TRANSFER_OUT_DEPOSIT"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_united_apr",
+            "account_id": "acct_cc_personal",
+            "amount": -500.00,
+            "date": "2026-04-08",
+            "name": "UNITED AIRLINES REFUND",
+            "personal_finance_category": {"primary": "TRAVEL", "detailed": "TRAVEL_FLIGHTS"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_united_mar",
+            "account_id": "acct_cc_personal",
+            "amount": -500.00,
+            "date": "2026-03-08",
+            "name": "UNITED AIRLINES REFUND",
+            "personal_finance_category": {"primary": "TRAVEL", "detailed": "TRAVEL_FLIGHTS"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_united_feb",
+            "account_id": "acct_cc_personal",
+            "amount": -500.00,
+            "date": "2026-02-08",
+            "name": "UNITED AIRLINES REFUND",
+            "personal_finance_category": {"primary": "TRAVEL", "detailed": "TRAVEL_FLIGHTS"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_interest_apr",
+            "account_id": "acct_savings",
+            "amount": -2.10,
+            "date": "2026-04-30",
+            "name": "INTEREST PAYMENT",
+            "personal_finance_category": {"primary": "TRANSFER_IN", "detailed": "TRANSFER_IN_ACCOUNT_TRANSFER"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_rent_apr",
+            "account_id": "acct_checking",
+            "amount": 2000.00,
+            "date": "2026-04-01",
+            "name": "RENT",
+            "personal_finance_category": {"primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_RENT"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_rent_mar",
+            "account_id": "acct_checking",
+            "amount": 2000.00,
+            "date": "2026-03-01",
+            "name": "RENT",
+            "personal_finance_category": {"primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_RENT"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_rent_feb",
+            "account_id": "acct_checking",
+            "amount": 2000.00,
+            "date": "2026-02-01",
+            "name": "RENT",
+            "personal_finance_category": {"primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_RENT"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_food_apr",
+            "account_id": "acct_cc_personal",
+            "amount": 312.45,
+            "date": "2026-04-12",
+            "name": "WHOLE FOODS",
+            "personal_finance_category": {"primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_ccpay_apr",
+            "account_id": "acct_checking",
+            "amount": 410.00,
+            "date": "2026-04-22",
+            "name": "CREDIT CARD PAYMENT",
+            "personal_finance_category": {"primary": "LOAN_PAYMENTS", "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"},
+            "pending": false
+          }
+        ],
+        "request_id": "sanitized"
+      },
+      "liabilities": {
+        "available": true,
+        "data": {
+          "accounts": [],
+          "liabilities": {
+            "credit": [
+              {
+                "account_id": "acct_cc_personal",
+                "minimum_payment_amount": 20.00,
+                "last_payment_amount": 410.00,
+                "last_statement_balance": 410.00,
+                "is_overdue": false,
+                "aprs": [{"apr_percentage": 19.99, "apr_type": "purchase_apr", "balance_subject_to_apr": 410.00}]
+              },
+              {
+                "account_id": "acct_cc_business",
+                "minimum_payment_amount": 100.00,
+                "last_payment_amount": 100.00,
+                "last_statement_balance": 5020.00,
+                "is_overdue": false,
+                "aprs": [{"apr_percentage": 22.99, "apr_type": "purchase_apr", "balance_subject_to_apr": 5020.00}]
+              }
+            ],
+            "student": [
+              {
+                "account_id": "acct_student",
+                "minimum_payment_amount": 25.00,
+                "last_payment_amount": 25.00,
+                "outstanding_interest_amount": 0,
+                "loan_status": {"type": "repayment"},
+                "servicer_address": {"city": "REDACTED", "region": "CA", "street": "REDACTED", "postal_code": "00000", "country": "US"}
+              }
+            ],
+            "mortgage": [
+              {
+                "account_id": "acct_mortgage",
+                "last_payment_amount": 3141.54,
+                "last_payment_date": "2026-04-01",
+                "loan_term": "30 year",
+                "interest_rate": {"percentage": 5.5, "type": "fixed"},
+                "property_address": {"city": "REDACTED", "region": "CA", "street": "REDACTED", "postal_code": "00000", "country": "US"}
+              }
+            ]
+          },
+          "item": {"item_id": "item_user_good"},
+          "request_id": "sanitized"
+        }
+      },
+      "investments": {"available": false, "reason": "product_not_ready"},
+      "recurring": {"available": false, "reason": "product_not_ready"}
+    }
+  ]
+}

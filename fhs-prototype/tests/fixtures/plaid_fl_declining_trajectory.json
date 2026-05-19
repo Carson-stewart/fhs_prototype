@@ -1,0 +1,56 @@
+{
+  "session_id": "sess_fl_declining_trajectory",
+  "freelance_account_separation": "separate_business_account",
+  "items": [
+    {
+      "item_id": "item_fl_declining",
+      "institution_name": "Mercury Business",
+      "fetched_at": "2026-05-01T00:00:00Z",
+      "accounts": {
+        "available": true,
+        "data": {
+          "accounts": [
+            {
+              "account_id": "acct_biz_check_decl",
+              "name": "Mercury Business Checking",
+              "type": "depository",
+              "subtype": "business checking",
+              "holder_category": "business",
+              "balances": {"current": 7800.00, "available": 7500.00, "iso_currency_code": "USD"}
+            }
+          ],
+          "request_id": "sanitized"
+        }
+      },
+      "transactions": {
+        "available": true,
+        "data": [
+          {"transaction_id": "stripe_apr_decl", "account_id": "acct_biz_check_decl",
+           "amount": -1500.00, "date": "2026-04-15",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "stripe_mar_decl", "account_id": "acct_biz_check_decl",
+           "amount": -3000.00, "date": "2026-03-15",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "stripe_feb_decl", "account_id": "acct_biz_check_decl",
+           "amount": -5000.00, "date": "2026-02-15",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "stripe_jan_decl", "account_id": "acct_biz_check_decl",
+           "amount": -7000.00, "date": "2026-01-15",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false}
+        ],
+        "request_id": "sanitized"
+      },
+      "liabilities": {"available": false, "reason": "product_not_ready"},
+      "investments": {"available": false, "reason": "product_not_ready"},
+      "recurring": {"available": false, "reason": "product_not_ready"}
+    }
+  ]
+}

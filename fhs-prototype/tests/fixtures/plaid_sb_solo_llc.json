@@ -1,0 +1,100 @@
+{
+  "session_id": "sess_sb_solo_llc",
+  "items": [
+    {
+      "item_id": "item_sb_solo_llc",
+      "institution_name": "First Platypus Bank",
+      "fetched_at": "2026-05-08T00:00:00Z",
+      "accounts": {
+        "available": true,
+        "data": {
+          "accounts": [
+            {
+              "account_id": "acct_biz_checking",
+              "name": "Plaid Business Checking",
+              "official_name": "Plaid Business Checking — Acme Consulting LLC",
+              "type": "depository",
+              "subtype": "business checking",
+              "holder_category": "business",
+              "balances": {"current": 32500.00, "available": 31000.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_biz_savings",
+              "name": "Plaid Business Savings",
+              "type": "depository",
+              "subtype": "business savings",
+              "holder_category": "business",
+              "balances": {"current": 12500.00, "available": 12500.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_biz_cc",
+              "name": "Plaid Business Credit Card",
+              "type": "credit",
+              "subtype": "credit card",
+              "holder_category": "business",
+              "balances": {"current": 1850.00, "iso_currency_code": "USD"}
+            }
+          ],
+          "request_id": "sanitized"
+        }
+      },
+      "transactions": {
+        "available": true,
+        "data": [
+          {
+            "transaction_id": "txn_client_payment_apr",
+            "account_id": "acct_biz_checking",
+            "amount": -8500.00,
+            "date": "2026-04-15",
+            "name": "ACME CONSULTING — CLIENT INVOICE PAYMENT",
+            "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_client_payment_mar",
+            "account_id": "acct_biz_checking",
+            "amount": -7200.00,
+            "date": "2026-03-15",
+            "name": "ACME CONSULTING — CLIENT INVOICE PAYMENT",
+            "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+            "pending": false
+          },
+          {
+            "transaction_id": "txn_office_apr",
+            "account_id": "acct_biz_checking",
+            "amount": 1800.00,
+            "date": "2026-04-01",
+            "name": "OFFICE LEASE",
+            "personal_finance_category": {"primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_RENT"},
+            "pending": false
+          }
+        ],
+        "request_id": "sanitized"
+      },
+      "liabilities": {
+        "available": true,
+        "data": {
+          "accounts": [],
+          "liabilities": {
+            "credit": [
+              {
+                "account_id": "acct_biz_cc",
+                "minimum_payment_amount": 35.00,
+                "last_payment_amount": 1850.00,
+                "last_statement_balance": 1850.00,
+                "is_overdue": false,
+                "aprs": [{"apr_percentage": 21.99, "apr_type": "purchase_apr", "balance_subject_to_apr": 1850.00}]
+              }
+            ],
+            "student": [],
+            "mortgage": []
+          },
+          "item": {"item_id": "item_sb_solo_llc"},
+          "request_id": "sanitized"
+        }
+      },
+      "investments": {"available": false, "reason": "product_not_ready"},
+      "recurring": {"available": false, "reason": "product_not_ready"}
+    }
+  ]
+}

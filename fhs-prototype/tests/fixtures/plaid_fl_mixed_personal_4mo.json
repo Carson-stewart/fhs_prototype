@@ -1,0 +1,77 @@
+{
+  "session_id": "sess_fl_mixed_personal_4mo",
+  "freelance_account_separation": "mixed_personal",
+  "items": [
+    {
+      "item_id": "item_fl_mixed",
+      "institution_name": "Chase",
+      "fetched_at": "2026-05-01T00:00:00Z",
+      "accounts": {
+        "available": true,
+        "data": {
+          "accounts": [
+            {
+              "account_id": "acct_pers_check_mixed",
+              "name": "Plaid Checking",
+              "official_name": "Plaid Gold Checking",
+              "type": "depository",
+              "subtype": "checking",
+              "holder_category": "personal",
+              "balances": {"current": 8500.00, "available": 8000.00, "iso_currency_code": "USD"}
+            }
+          ],
+          "request_id": "sanitized"
+        }
+      },
+      "transactions": {
+        "available": true,
+        "data": [
+          {"transaction_id": "abc_inv_apr", "account_id": "acct_pers_check_mixed",
+           "amount": -3500.00, "date": "2026-04-12",
+           "name": "ABC STUDIO LLC INVOICE PAYMENT", "merchant_name": "ABC Studio LLC",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "abc_inv_feb", "account_id": "acct_pers_check_mixed",
+           "amount": -4000.00, "date": "2026-02-15",
+           "name": "ABC STUDIO LLC INVOICE PAYMENT", "merchant_name": "ABC Studio LLC",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "stripe_apr_m", "account_id": "acct_pers_check_mixed",
+           "amount": -1500.00, "date": "2026-04-20",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "stripe_mar_m", "account_id": "acct_pers_check_mixed",
+           "amount": -1800.00, "date": "2026-03-20",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "stripe_feb_m", "account_id": "acct_pers_check_mixed",
+           "amount": -1200.00, "date": "2026-02-20",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "stripe_jan_m", "account_id": "acct_pers_check_mixed",
+           "amount": -2000.00, "date": "2026-01-20",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "rent_apr_m", "account_id": "acct_pers_check_mixed",
+           "amount": 1800.00, "date": "2026-04-01",
+           "name": "RENT", "merchant_name": "Landlord",
+           "personal_finance_category": {"primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_RENT"},
+           "pending": false},
+          {"transaction_id": "rent_mar_m", "account_id": "acct_pers_check_mixed",
+           "amount": 1800.00, "date": "2026-03-01",
+           "name": "RENT", "merchant_name": "Landlord",
+           "personal_finance_category": {"primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_RENT"},
+           "pending": false}
+        ],
+        "request_id": "sanitized"
+      },
+      "liabilities": {"available": false, "reason": "product_not_ready"},
+      "investments": {"available": false, "reason": "product_not_ready"},
+      "recurring": {"available": false, "reason": "product_not_ready"}
+    }
+  ]
+}

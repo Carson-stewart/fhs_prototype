@@ -1,0 +1,90 @@
+{
+  "session_id": "sess_fl_separated_3mo",
+  "freelance_account_separation": "separate_business_account",
+  "items": [
+    {
+      "item_id": "item_fl_separated",
+      "institution_name": "Mercury Business",
+      "fetched_at": "2026-05-01T00:00:00Z",
+      "accounts": {
+        "available": true,
+        "data": {
+          "accounts": [
+            {
+              "account_id": "acct_biz_check_sep",
+              "name": "Mercury Business Checking",
+              "official_name": "Mercury Business Checking — J. Doe Freelance LLC",
+              "type": "depository",
+              "subtype": "business checking",
+              "holder_category": "business",
+              "balances": {"current": 18500.00, "available": 18000.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_biz_savings_sep",
+              "name": "Mercury Business Savings",
+              "type": "depository",
+              "subtype": "business savings",
+              "holder_category": "business",
+              "balances": {"current": 12000.00, "available": 12000.00, "iso_currency_code": "USD"}
+            }
+          ],
+          "request_id": "sanitized"
+        }
+      },
+      "transactions": {
+        "available": true,
+        "data": [
+          {"transaction_id": "stripe_apr", "account_id": "acct_biz_check_sep",
+           "amount": -2200.00, "date": "2026-04-15",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "stripe_mar", "account_id": "acct_biz_check_sep",
+           "amount": -2300.00, "date": "2026-03-15",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "stripe_feb", "account_id": "acct_biz_check_sep",
+           "amount": -2100.00, "date": "2026-02-15",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "stripe_jan", "account_id": "acct_biz_check_sep",
+           "amount": -2200.00, "date": "2026-01-15",
+           "name": "STRIPE TRANSFER", "merchant_name": "Stripe",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "upwork_apr", "account_id": "acct_biz_check_sep",
+           "amount": -1100.00, "date": "2026-04-22",
+           "name": "UPWORK ESCROW", "merchant_name": "Upwork",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "upwork_mar", "account_id": "acct_biz_check_sep",
+           "amount": -1050.00, "date": "2026-03-22",
+           "name": "UPWORK ESCROW", "merchant_name": "Upwork",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "upwork_feb", "account_id": "acct_biz_check_sep",
+           "amount": -1150.00, "date": "2026-02-22",
+           "name": "UPWORK ESCROW", "merchant_name": "Upwork",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "upwork_jan", "account_id": "acct_biz_check_sep",
+           "amount": -1100.00, "date": "2026-01-22",
+           "name": "UPWORK ESCROW", "merchant_name": "Upwork",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "rent_apr", "account_id": "acct_biz_check_sep",
+           "amount": 1500.00, "date": "2026-04-01",
+           "name": "OFFICE LEASE",
+           "personal_finance_category": {"primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_RENT"},
+           "pending": false}
+        ],
+        "request_id": "sanitized"
+      },
+      "liabilities": {"available": false, "reason": "product_not_ready"},
+      "investments": {"available": false, "reason": "product_not_ready"},
+      "recurring": {"available": false, "reason": "product_not_ready"}
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "session_id": "sess_sb_mixed",
+  "items": [
+    {
+      "item_id": "item_sb_mixed",
+      "institution_name": "Wells Fargo",
+      "fetched_at": "2026-05-08T00:00:00Z",
+      "accounts": {
+        "available": true,
+        "data": {
+          "accounts": [
+            {
+              "account_id": "acct_pers_check",
+              "name": "Plaid Checking",
+              "official_name": "Plaid Gold Checking",
+              "type": "depository",
+              "subtype": "checking",
+              "holder_category": "personal",
+              "balances": {"current": 4500.00, "available": 4500.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_pers_savings",
+              "name": "Plaid Saving",
+              "type": "depository",
+              "subtype": "savings",
+              "holder_category": "personal",
+              "balances": {"current": 12000.00, "available": 12000.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_pers_cc",
+              "name": "Plaid Credit Card",
+              "type": "credit",
+              "subtype": "credit card",
+              "holder_category": "personal",
+              "balances": {"current": 1200.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_biz_check_mixed",
+              "name": "Plaid Business Checking",
+              "official_name": "Plaid Business Checking — Tartan LLC",
+              "type": "depository",
+              "subtype": "business checking",
+              "holder_category": "business",
+              "balances": {"current": 18000.00, "available": 17500.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_biz_cc_mixed",
+              "name": "Plaid Business Credit Card",
+              "type": "credit",
+              "subtype": "credit card",
+              "holder_category": "business",
+              "balances": {"current": 3500.00, "iso_currency_code": "USD"}
+            },
+            {
+              "account_id": "acct_biz_loc_mixed",
+              "name": "Wells Fargo Business LOC",
+              "official_name": "Tartan LLC Business LOC",
+              "type": "credit",
+              "subtype": "line of credit",
+              "balances": {
+                "current": 5000.00,
+                "available": 15000.00,
+                "limit": 20000.00,
+                "iso_currency_code": "USD"
+              }
+            }
+          ],
+          "request_id": "sanitized"
+        }
+      },
+      "transactions": {
+        "available": true,
+        "data": [
+          {
+            "transaction_id": "txn_payroll_apr_mixed",
+            "account_id": "acct_pers_check",
+            "amount": -3200.00,
+            "date": "2026-04-15",
+            "name": "GUSTO PAY — TARTAN LLC",
+            "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_WAGES"},
+            "pending": false
+          }
+        ],
+        "request_id": "sanitized"
+      },
+      "liabilities": {
+        "available": true,
+        "data": {
+          "accounts": [],
+          "liabilities": {
+            "credit": [
+              {
+                "account_id": "acct_pers_cc",
+                "minimum_payment_amount": 25.00,
+                "last_payment_amount": 1200.00,
+                "last_statement_balance": 1200.00,
+                "is_overdue": false,
+                "aprs": [{"apr_percentage": 19.99, "apr_type": "purchase_apr", "balance_subject_to_apr": 1200.00}]
+              },
+              {
+                "account_id": "acct_biz_cc_mixed",
+                "minimum_payment_amount": 70.00,
+                "last_payment_amount": 70.00,
+                "last_statement_balance": 3500.00,
+                "is_overdue": false,
+                "aprs": [{"apr_percentage": 21.99, "apr_type": "purchase_apr", "balance_subject_to_apr": 3500.00}]
+              },
+              {
+                "account_id": "acct_biz_loc_mixed",
+                "minimum_payment_amount": 60.00,
+                "last_payment_amount": 60.00,
+                "last_statement_balance": 5000.00,
+                "is_overdue": false,
+                "aprs": [{"apr_percentage": 12.25, "apr_type": "purchase_apr", "balance_subject_to_apr": 5000.00}]
+              }
+            ],
+            "student": [],
+            "mortgage": []
+          },
+          "item": {"item_id": "item_sb_mixed"},
+          "request_id": "sanitized"
+        }
+      },
+      "investments": {"available": false, "reason": "product_not_ready"},
+      "recurring": {"available": false, "reason": "product_not_ready"}
+    }
+  ]
+}

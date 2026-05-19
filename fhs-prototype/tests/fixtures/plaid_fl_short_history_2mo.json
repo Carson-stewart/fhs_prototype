@@ -1,0 +1,51 @@
+{
+  "session_id": "sess_fl_short_history_2mo",
+  "freelance_account_separation": "unknown",
+  "items": [
+    {
+      "item_id": "item_fl_short_history",
+      "institution_name": "Bank of America",
+      "fetched_at": "2026-05-01T00:00:00Z",
+      "accounts": {
+        "available": true,
+        "data": {
+          "accounts": [
+            {
+              "account_id": "acct_pers_check_short",
+              "name": "Plaid Checking",
+              "type": "depository",
+              "subtype": "checking",
+              "holder_category": "personal",
+              "balances": {"current": 4200.00, "available": 4000.00, "iso_currency_code": "USD"}
+            }
+          ],
+          "request_id": "sanitized"
+        }
+      },
+      "transactions": {
+        "available": true,
+        "data": [
+          {"transaction_id": "acme_inv_apr", "account_id": "acct_pers_check_short",
+           "amount": -2800.00, "date": "2026-04-10",
+           "name": "ACME LLC CONTRACT PAYMENT", "merchant_name": "Acme LLC",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "acme_inv_mar", "account_id": "acct_pers_check_short",
+           "amount": -2500.00, "date": "2026-03-10",
+           "name": "ACME LLC CONTRACT PAYMENT", "merchant_name": "Acme LLC",
+           "personal_finance_category": {"primary": "INCOME", "detailed": "INCOME_OTHER_INCOME"},
+           "pending": false},
+          {"transaction_id": "rent_apr_short", "account_id": "acct_pers_check_short",
+           "amount": 1400.00, "date": "2026-04-01",
+           "name": "RENT", "merchant_name": "Landlord",
+           "personal_finance_category": {"primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_RENT"},
+           "pending": false}
+        ],
+        "request_id": "sanitized"
+      },
+      "liabilities": {"available": false, "reason": "product_not_ready"},
+      "investments": {"available": false, "reason": "product_not_ready"},
+      "recurring": {"available": false, "reason": "product_not_ready"}
+    }
+  ]
+}
