@@ -1,0 +1,29 @@
+{
+  "label": "fl8",
+  "scores": {
+    "fhs": 569,
+    "fss": 40,
+    "frs": 57,
+    "fhs_band": "Watch",
+    "fss_band": "Manageable",
+    "frs_band": "Improving"
+  },
+  "fss_pcts": {
+    "HI debt burden": 0.5,
+    "Savings rate deficit": 37.3,
+    "Insurance gap": 19.9,
+    "Retirement gap": 6.3,
+    "Income volatility": 6.2,
+    "Tax reserve insufficiency": 29.8
+  },
+  "rec_titles": [
+    "We see business accounts in your profile",
+    "Set aside tax money this week",
+    "Months 1: Put $1,900/month toward high-interest debt",
+    "Put $1,900/month against your high-interest debt to clear it in ~1 month",
+    "Get term life insurance",
+    "Add disability insurance to your benefits"
+  ],
+  "famine_context_present": false,
+  "plan_phases_count": 2
+}

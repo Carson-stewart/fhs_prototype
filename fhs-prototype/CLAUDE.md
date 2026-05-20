@@ -46,7 +46,9 @@ For full strategic context (mission, vision, values, positioning, revenue model,
 
 **Phase 6 / Pre-Beta Polish Pass 2 complete (May 19 2026):** Plan multi-render unification shipped as a single render-layer work item (WI-5). The legacy `engine.generate_recommendations` continues to emit a plan-as-rec card alongside the canonical "Your 6-month plan" card; `static/index.html` now filters that duplicate out at render time by matching the legacy rec's `action` against `d.plan_phases[0].description`. Per-step legacy recs (phases_count==0) that add information beyond the plan (time-to-completion, target dollars) are preserved. fl3 (Famine — no LP plan) unaffected. All 7 gate suites remain green at 23/23 / 137/137 / 10/10 / 30/30 / 51/51 / 87/87 / 13/13. Backend cleanup (stop emitting the duplicate at source) is a future session, not this one — render-layer suppression is reversible if a use case emerges.
 
-**Active:** Phase 6 pre-beta polish complete (Pass 1 + Pass 2). **Next:** fl1/fl9 sub-score divergence diagnostic (Missing coverage 50%/61%, Retirement catch-up 32%/39% — same FL Predictable inputs producing different breakdowns with vs without Plaid).
+**Phase 6 / Form-submit archetype-stripping fix complete (May 20 2026):** Three work items shipped against the fl1/fl9 diagnostic findings. WI-1 contract patch (`ScoreRequest` + `PreviousSnapshotRequest` extended via new `ArchetypeExtensionFields` mixin carrying `archetype` + the full FL/SB extension surface; `compute_score` + `compute_score_with_previous` thread the extension kwargs into `IndividualInput`; frontend gets a window-scoped `_extensionFieldCache` populated by `onProfileSelect` and `prefillFormFromMap`, sent via `computeScore` body assembly). WI-2 new `test_api_integration.py` suite (9 tests covering archetype dispatch through `/api/score`, fl1/fl9 parity-via-API regression, FL Famine framing fires, SB extension dispatches, scrubber holds across all archetypes). WI-3 programmatic visual re-test (fl3 Famine, fl8 Quarterly-Due, fl9 FL Predictable all reproduce intended state through `/api/score`). Compliance gate is now **8 suites** going forward: 23/23 / 137/137 / 10/10 / 30/30 / 51/51 / 87/87 / 13/13 / **9/9 API integration**. The fl1/fl9 divergence is closed end-to-end.
+
+**Active:** None — Phase 6 polish + diagnostic + fix all closed. **Next:** Phase 6 real-data calibration (now unblocked — the API contract no longer drops 9 input fields, so beta-user data can calibrate against the full archetype surface).
 
 **Next up:** Phase 5c (Individual W-2 deepening) or Phase 6 (real-data calibration) — strategic decision depending on whether beta data is available. Phase 5d (Startup) inherits the proven layered-extension pattern from Phase 5a + 5b.
 
@@ -58,7 +60,7 @@ For full strategic context (mission, vision, values, positioning, revenue model,
 | **5a** | ✅ Done | Small Business archetype: schema, scoring, mapper, recommendations, full integration. |
 | **5b** | ✅ Done | Freelancer archetype: schema, scoring with FL-FSS contributors, 1099/gig mapper detection, Famine-state recommendations with hand-reviewed copy. 23/23 unified archetype compliance. |
 | 5c / 5d | Pending (next) | Individual W-2 deepening / Startup. Per strategy doc §6.2 reordering. |
-| **6** | 🟡 In progress | Real-data calibration + pre-beta polish. **Pass 1 + Pass 2 of pre-beta polish complete** (May 19 2026, see §3 + changelog). fl1/fl9 sub-score divergence diagnostic next, then Model B weight calibration from real beta data. |
+| **6** | 🟡 In progress | Real-data calibration + pre-beta polish. **Pass 1 + Pass 2 polish + fl1/fl9 diagnostic + form-submit archetype fix all complete** (May 19–20 2026, see §3 + changelog). Compliance gate now **8 suites** (added `test_api_integration.py`). Real-data calibration unblocked. |
 | **7** | Pending | **(7a) React Native + React Native Web conversion**, **(7b) Production hardening** (Plaid token encryption, debug surface removal, audit logging, data deletion flow) |
 | 8 | Pending | Closed beta launch |
 | 9 | Pending | Public launch on iOS, Android, web simultaneously, including couple/partner mode |
@@ -1972,3 +1974,112 @@ With Pass 1 and Pass 2 complete, the remaining items between this state and a be
 4. **Phase 7a React Native + React Native Web conversion** — strictly speaking Phase 8 (closed beta) could ship on the vanilla frontend; the React Native conversion was sequenced *before* production hardening to keep one codebase from drifting into two. If beta is desktop-web-only, this can technically slip; if beta is mobile, this is on the critical path.
 
 **Strategic read:** the visual polish work (Pass 1 + Pass 2) has cleared the surface defects that would have caused early-beta users to lose confidence in Relius before they got to the next-move surface. The remaining items are infrastructure (7b) and platform reach (7a), not user-experience defects. The system is in materially better shape for beta than it was 48 hours ago.
+
+## Phase 6 — Form-Submit Archetype-Stripping Fix (May 20 2026)
+
+**Closed.** Three work items shipped against the fl1/fl9 diagnostic. The API contract bug that silently degraded every non-Individual archetype profile to Individual-W-2 scoring on Compute is fixed end-to-end. Compliance gate transitioned from **7 suites** to **8 suites** with the new `test_api_integration.py` permanent guard.
+
+### Step 0 — Investigation findings
+
+Before any code changes, traced which user-reachable paths actually exhibit the contract bug:
+
+| Path | Endpoint | Hits the bug? |
+|---|---|---|
+| Dropdown profile select (`onProfileSelect`) | GET `/api/profile/{idx}` → render directly | NO — server runs `score_individual()` with full synthetic profile |
+| Plaid connect (`/plaid/exchange` + `/plaid/map`) | Plaid → form prefill | NO directly — only prefills form; doesn't auto-score |
+| Manual Compute button (`computeScore`) | POST `/api/score` | **YES** — strips archetype + 9 extension fields |
+| Manual Compute after Plaid sync | POST `/api/score` | **YES** — same |
+| `_capture.py` (Pass 2 tool) | direct `score_individual()` import | NO — bypasses API entirely |
+| `test_runner.py` | direct `score_individual()` import | NO — bypasses API entirely |
+
+Diagnostic claim ("every non-Individual archetype silently degrades on form submit") confirmed accurate for **real user paths** (type-and-Compute, Plaid-and-Compute). The Phase 5b visual testing used the dropdown which bypasses the bug — that's why FL output looked correct in PDFs despite the contract gap. Worth flagging: the brief mentioned "FreelancerInput / SmallBusinessInput / IndividualInput" as separate input classes — **they do not exist**. `IndividualInput` is the single dataclass (42 fields) carrying all archetype-extension fields as optional defaults. The fix is simpler than the brief implied — no class branching needed, just thread the fields through.
+
+### WI-1 — Contract patch
+
+**Backend** (`api.py`):
+- New `class ArchetypeExtensionFields(BaseModel)` mixin carrying `archetype` + the full FL/SB extension surface (~22 fields) with engine-matching defaults. All Optional / safe-defaulted so legacy callers stay bit-for-bit unchanged.
+- New `_extension_kwargs(req)` helper extracts the mixin fields into kwargs for `IndividualInput`, filtering out `None` for `default_factory` fields (dataclass rejects explicit None for those).
+- `ScoreRequest` and `PreviousSnapshotRequest` now both inherit from `ArchetypeExtensionFields` — single source of truth for the extension surface.
+- `compute_score` and `compute_score_with_previous` thread `**_extension_kwargs(req)` into the `IndividualInput` constructor.
+- **Bug found during integration test:** initial `ap_pending` / `ar_aging_buckets` typed as `Optional[list]`; engine expects `dict`. Fixed both to `Optional[dict]` after the integration test caught the 422 validation error — exactly the kind of contract-shape bug the new test suite is designed to surface.
+
+**Frontend** (`static/index.html`):
+- New `_EXTENSION_FIELD_DEFAULTS` constant + `let _extensionFieldCache` window-scoped state. ~50 lines including the rationale block.
+- New `_resetExtensionFieldCache()` and `_populateExtensionCacheFromInput()` helpers.
+- `onProfileSelect` resets the cache then populates from `d.input.*` (the profile load).
+- `prefillFormFromMap` extracts the 6 archetype-extension fields the mapper produces (`income_volatility_observed`, `months_of_income_history`, `income_sources`, `business_lines_of_credit`, `ar_aging_buckets`, `ap_pending`) into the cache.
+- `computeScore` body assembly spreads `..._extensionFieldCache` into the request body.
+
+**State cache approach: simpler-than-P4-H4 pattern, per brief's invitation.** The cache has no user-edit-precedence logic because extension fields aren't directly user-editable in the current UI (no form inputs exist for them). The lifecycle (profile-load populate, Plaid-sync populate, archetype-switch reset) is the entire surface. Flagged for Phase 7a React Native refactor like the other `window.__` stopgaps.
+
+**Scope guards held.** No engine.py changes. No LP solver changes. No `_scrub_breakdowns_for_api` changes. No response shape changes. The fix sits entirely at the contract layer between frontend and engine.
+
+### WI-2 — Integration test (the new 8th gate)
+
+`test_api_integration.py` — 9 tests, all green. Uses `fastapi.testclient.TestClient` to POST through the live `/api/score` and `/api/score/previous` endpoints.
+
+**Test isolation finding:** `compute_score` reads `momentum_slope` and `streak_days` from a SQLite-backed user state ("stored value wins"). Without per-test user IDs, cross-test pollution accumulated `momentum_slope = -0.276` on the anonymous user, which fires FL-FSS-4 Volatility trajectory and skews the fl1/fl9 parity assertion. Fix: every `_post_score()` call sends a unique `X-User-Id: test-<uuid>` header, giving each test a fresh zero-state.
+
+**Tests that would have caught the original bug:**
+- `test_freelancer_fl1_fl9_parity_via_api` — direct reproduction of the originally-reported 50%→61% / 32%→39% drift. Asserts Insurance gap ≈ 49.7% and Retirement gap ≈ 31.7% via /api/score; without the fix, this assertion fails.
+- `test_freelancer_fields_flow_to_engine` — asserts Income volatility contributor (~18.6%) appears in the FSS breakdown when the FL profile is submitted; without the fix, the contributor is silently absent.
+- `test_freelancer_famine_framing_via_api` — asserts the registered Famine primary titles fire on fl3 input via /api/score; without the fix, `extend_score_for_freelancer` never dispatches and Famine framing is silently skipped.
+- `test_smallbusiness_fields_flow_to_engine` — same pattern for SB archetype.
+
+**Tests that guard against future regressions:**
+- `test_individual_default_archetype_works` — backward-compat: pre-fix Individual-only request bodies still produce valid Individual responses.
+- `test_individual_explicit_archetype_unchanged` — sending archetype='individual_w2' explicitly equals the implicit default.
+- `test_freelancer_buggy_path_no_longer_degrades_silently` — documents that legacy bodies STILL degrade (intentional backward compat); the win is that real frontends now send archetype.
+- `test_smallbusiness_buggy_path_degrades_silently` — same pattern for SB.
+- `test_all_archetypes_scrubber_clean` — trade-secret scrubber holds across the widened contract.
+
+### WI-3 — Post-fix visual re-test (programmatic equivalent)
+
+No browser available; `tests/state_capture/post_fix_visual/_capture.py` posts through `/api/score` with the post-fix frontend body shape for fl3, fl8, fl9 and asserts intended-state reproduction.
+
+| Profile | Acceptance | Result |
+|---|---|---|
+| fl3 (Famine) | Famine framing fires; `famine_context` populated | **PASS** — "Focus on essentials this period" + 3 secondaries present; famine_context.estimated_runway_months populated |
+| fl8 (Quarterly-Due) | tax-reserve recommendation fires; 2 plan phases | **PASS** — "Set aside tax money this week" primary; 2 phases (matches Pass 2 baseline) |
+| fl9 (FL Predictable via /api/score) | sub-scores match fl1 | **PASS** — Insurance gap 49.7% (was 61.1%), Retirement gap 31.7% (was 38.9%), Income volatility 18.6% (was 0% — contributor missing entirely) |
+
+**Side observation, not a regression:** fl3 and fl8 responses now lead with a "We see business accounts in your profile" archetype-suggestion rec from the cross-archetype generator (api.py's `_augment_recommendations_from_inp`). It fires because both FL profiles carry `business_structure='sole_proprietor'` and the helper keys on that signal. Pre-existing behavior, newly visible because the fix correctly exposes extension fields. Not a Pass 1/Pass 2 regression. Worth a UX call in a future session about whether sole-prop Freelancers should see a Small-Business archetype prompt.
+
+### New bugs surfaced during the fix
+
+1. **`ap_pending` / `ar_aging_buckets` type mismatch in initial schema.** I declared them `Optional[list]`; engine uses `dict` with bucket keys (`due_within_7d`, `overdue`, etc.). Integration test caught the 422 validation error. Fixed to `Optional[dict]`. **This is exactly why the integration test exists** — contract-shape bugs that unit tests can't catch.
+2. **Test-state pollution via shared anonymous user.** `momentum_slope` accumulated across test runs and skewed assertions. Resolved with per-test UUID headers. Worth flagging as a general pattern: any future API integration test must use isolated user IDs.
+
+### Files modified
+
+| File | Change |
+|---|---|
+| `api.py` | +120 lines: `ArchetypeExtensionFields` mixin, `_extension_kwargs` helper, threading into both score endpoints |
+| `static/index.html` | +90 lines: extension cache + lifecycle helpers + wire-in to `onProfileSelect` / `prefillFormFromMap` / `computeScore` |
+| `test_api_integration.py` | new, ~260 lines: 9 tests covering archetype dispatch, fl1/fl9 parity, Famine, SB, scrubber |
+| `tests/state_capture/post_fix_visual/_capture.py` | new, ~110 lines: programmatic visual re-test of fl3/fl8/fl9 through /api/score |
+| `CLAUDE.md` | this changelog entry + §3 "Where We Are" + Pass 2's beta-readiness list update |
+
+### `contribution_pct` UX issue — still flagged
+
+The underlying UX issue surfaced by the diagnostic (`contribution_pct` is a share-of-total-strain metric that mechanically swings when contributors enter/leave the set) is **not** addressed by this fix. The fix eliminates the SPECIFIC trigger (archetype-stripping caused FL-FSS-1 to drop out, re-inflating remaining shares) but the underlying semantic remains. Future flag: a UX session may want to consider rendering `pla` (absolute strain) directly, renaming the column to "Share of strain mix", or computing `contribution_pct` against a fixed denominator. Defer to a dedicated UX brief — not in scope here.
+
+### Updated beta-readiness assessment
+
+Pre-fix list (from the diagnostic):
+
+1. ~~fl1/fl9 diagnostic~~ ✅
+2. Form-submit archetype-stripping fix
+3. Phase 6 real-data calibration (blocked by #2)
+4. Phase 7b production hardening
+5. Phase 7a React Native conversion
+
+**Post-fix list:**
+
+1. ~~fl1/fl9 diagnostic~~ ✅
+2. ~~Form-submit archetype-stripping fix~~ ✅
+3. **Phase 6 real-data calibration** — now unblocked. The API contract no longer drops 9 extension fields, so beta-user data can calibrate against the full archetype surface.
+4. **Phase 7b production hardening** — Plaid token encryption, debug surface removal, audit logging, data deletion flow. Gate-of-shipping for any real-user beta.
+5. **Phase 7a React Native conversion** — critical path only if beta is mobile.
+
+**Strategic read:** the diagnostic + fix sequence proved out the architecture. The bug that silently degraded every non-Individual archetype was real, was reachable through every realistic user path, and would have surfaced in beta within the first 100 users. The new 8th gate (`test_api_integration.py`) is the durable guard — it ran on the post-fix code and caught the `ap_pending` dict-vs-list bug within the same session, demonstrating exactly the value it's meant to provide. Calibration can now proceed against an API surface that's faithful to the engine's archetype design.

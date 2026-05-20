@@ -41,7 +41,87 @@ def _user_id(x_user_id: Annotated[Optional[str], Header()] = None) -> str:
     return uid if uid else "anonymous"
 
 
-class ScoreRequest(BaseModel):
+class ArchetypeExtensionFields(BaseModel):
+    """Phase 6 fix — archetype-extension fields shared by ScoreRequest +
+    PreviousSnapshotRequest.
+
+    Before this mixin, /api/score and /api/score/previous accepted only
+    Individual-W-2 fields. The frontend Compute button consequently
+    stripped archetype + all Freelancer/Small-Business extension fields,
+    and every non-Individual profile silently degraded to Individual
+    scoring on submit. See `tests/state_capture/diagnostic_fl1_fl9/REPORT.md`
+    for the bisect.
+
+    All fields are optional with engine-matching defaults. Individual-only
+    callers that don't send any of these are bit-for-bit equivalent to the
+    pre-fix behavior (archetype defaults to 'individual_w2', extension
+    fields stay empty, FL/SB extensions don't dispatch).
+
+    Field whitelist intentionally MIRRORS the IndividualInput dataclass
+    extension surface — adding a new archetype field to the engine
+    requires adding it here too. The new integration test
+    (test_api_integration.py) is the safety net that catches drift.
+    """
+    # Archetype dispatch key
+    archetype: str = Field("individual_w2", max_length=50)
+
+    # Small-Business extension surface
+    business_structure: Optional[str] = Field(None, max_length=50)
+    revenue_cadence:    Optional[str] = Field(None, max_length=50)
+    ar_aging_buckets:   Optional[dict] = None
+    ap_pending:         Optional[dict] = None
+    payroll_periodicity: str = Field("none", max_length=50)
+    payroll_amount_per_cycle: float = Field(0, ge=0, le=10_000_000)
+    owner_draw_amount:        float = Field(0, ge=0, le=10_000_000)
+    owner_draw_cadence:       str   = Field("none", max_length=50)
+    business_lines_of_credit: Optional[list] = None
+    seasonal_revenue:     bool = False
+    seasonal_low_months:  Optional[list] = None
+
+    # Freelancer extension surface
+    income_sources:                  Optional[list]  = None
+    income_volatility_observed:      Optional[float] = Field(None, ge=0, le=10)
+    months_of_income_history:        int   = Field(0, ge=0, le=600)
+    tax_reserve_balance:             float = Field(0, ge=0, le=100_000_000)
+    tax_reserve_target_pct:          float = Field(0.30, ge=0, le=1)
+    quarterly_tax_due_date:          Optional[str]   = Field(None, max_length=20)
+    quarterly_tax_estimated_amount:  float = Field(0, ge=0, le=10_000_000)
+    fixed_monthly_obligations:       float = Field(0, ge=0, le=10_000_000)
+    freelance_account_separation:    str   = Field("unknown", max_length=50)
+
+
+def _extension_kwargs(req) -> dict:
+    """Extract the archetype-extension fields from any request carrying the
+    ArchetypeExtensionFields surface, filtering out None where the engine
+    dataclass uses a default_factory (otherwise the dataclass rejects None)."""
+    out = {
+        "archetype": req.archetype,
+        "business_structure": req.business_structure,
+        "revenue_cadence":    req.revenue_cadence,
+        "payroll_periodicity":       req.payroll_periodicity,
+        "payroll_amount_per_cycle":  req.payroll_amount_per_cycle,
+        "owner_draw_amount":         req.owner_draw_amount,
+        "owner_draw_cadence":        req.owner_draw_cadence,
+        "seasonal_revenue":          req.seasonal_revenue,
+        "income_volatility_observed":      req.income_volatility_observed,
+        "months_of_income_history":        req.months_of_income_history,
+        "tax_reserve_balance":             req.tax_reserve_balance,
+        "tax_reserve_target_pct":          req.tax_reserve_target_pct,
+        "quarterly_tax_due_date":          req.quarterly_tax_due_date,
+        "quarterly_tax_estimated_amount":  req.quarterly_tax_estimated_amount,
+        "fixed_monthly_obligations":       req.fixed_monthly_obligations,
+        "freelance_account_separation":    req.freelance_account_separation,
+    }
+    # default_factory fields (dataclass rejects explicit None for these):
+    if req.ar_aging_buckets is not None:        out["ar_aging_buckets"]   = req.ar_aging_buckets
+    if req.ap_pending is not None:              out["ap_pending"]         = req.ap_pending
+    if req.business_lines_of_credit is not None:out["business_lines_of_credit"] = req.business_lines_of_credit
+    if req.seasonal_low_months is not None:     out["seasonal_low_months"]= req.seasonal_low_months
+    if req.income_sources is not None:          out["income_sources"]     = req.income_sources
+    return out
+
+
+class ScoreRequest(ArchetypeExtensionFields):
     I_gross: float = Field(..., ge=0, le=1_000_000)
     I_net:   float = Field(..., ge=0, le=1_000_000)
     E_ess:   float = Field(..., ge=0, le=500_000)
@@ -65,7 +145,7 @@ class ScoreRequest(BaseModel):
     retired:        bool = False
 
 
-class PreviousSnapshotRequest(BaseModel):
+class PreviousSnapshotRequest(ArchetypeExtensionFields):
     # Current state — same required fields as ScoreRequest
     I_gross: float = Field(..., ge=0, le=1_000_000)
     I_net:   float = Field(..., ge=0, le=1_000_000)
@@ -791,6 +871,8 @@ async def compute_score(req: ScoreRequest, request: Request):
         use_multiperiod=req.use_multiperiod,
         dependents=req.dependents,
         retired=req.retired,
+        # Phase 6 fix — archetype dispatch + FL/SB extension surface
+        **_extension_kwargs(req),
     )
     try:
         result = score_individual(inp)
@@ -869,6 +951,8 @@ async def compute_score_with_previous(req: PreviousSnapshotRequest, request: Req
         use_multiperiod=req.use_multiperiod,
         dependents=req.dependents,
         retired=req.retired,
+        # Phase 6 fix — archetype dispatch + FL/SB extension surface
+        **_extension_kwargs(req),
     )
     try:
         result = score_individual(inp)

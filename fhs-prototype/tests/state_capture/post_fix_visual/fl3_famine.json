@@ -1,0 +1,21 @@
+{
+  "label": "fl3",
+  "scores": {
+    "fhs": 300,
+    "fss": 100,
+    "frs": 50,
+    "fhs_band": "Weak",
+    "fss_band": "Critical",
+    "frs_band": "Holding"
+  },
+  "fss_pcts": {},
+  "rec_titles": [
+    "We see business accounts in your profile",
+    "Focus on essentials this period",
+    "Pause subscriptions you can re-enable later",
+    "Tax payment coming up? IRS Form 1127 can extend it",
+    "Reach out to your top clients about upcoming work"
+  ],
+  "famine_context_present": true,
+  "plan_phases_count": 0
+}

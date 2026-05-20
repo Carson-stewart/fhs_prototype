@@ -1,0 +1,25 @@
+{
+  "label": "fl9",
+  "scores": {
+    "fhs": 686,
+    "fss": 8,
+    "frs": 55,
+    "fhs_band": "Good",
+    "fss_band": "Calm",
+    "frs_band": "Improving"
+  },
+  "fss_pcts": {
+    "Insurance gap": 49.7,
+    "Retirement gap": 31.7,
+    "Income volatility": 18.6
+  },
+  "rec_titles": [
+    "We see business accounts in your profile",
+    "Months 1\u20136: Redirect $1,925/month to retirement savings + $850/month to investments",
+    "Add disability insurance to your benefits",
+    "Check in weekly on your spending",
+    "Increase retirement contributions by 1% of gross income"
+  ],
+  "famine_context_present": false,
+  "plan_phases_count": 1
+}

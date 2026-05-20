@@ -839,6 +839,71 @@ const INDIVIDUAL_INPUT_FORM_FIELDS = [
   'S_liq','S_ret','age','overdrafts','late_payments',
 ];
 
+// Phase 6 fix — archetype-extension field cache.
+//
+// Before this cache, ScoreRequest in api.py omitted `archetype` and every
+// FL/SB-specific field, so /api/score silently degraded every non-Individual
+// profile to Individual-W-2 scoring. See tests/state_capture/diagnostic_fl1_fl9/
+// REPORT.md for the bisect and root cause.
+//
+// The fix here is intentionally simple per the brief's "simpler cache may
+// suffice" note: extension fields are not user-editable in the current UI
+// (there are no form inputs for income_volatility_observed, ar_aging_buckets,
+// etc.). They only enter via profile load (`onProfileSelect`) or Plaid sync
+// (`prefillFormFromMap`). The P4-H4 `dataset.userEdited` precedence pattern
+// is therefore unnecessary here — there is no user-edit signal to preserve.
+//
+// Lifecycle:
+//   - populated by onProfileSelect from `d.input.*` (the synthetic profile)
+//   - populated by prefillFormFromMap when Plaid maps the relevant fields
+//     (income_volatility_observed, months_of_income_history, income_sources)
+//   - read by computeScore() when assembling the /api/score body
+//   - reset by onProfileSelect when the user picks a different archetype
+//     (so a switch from Freelancer → Individual doesn't leak FL fields)
+//
+// Flagged for Phase 7a React Native refactor: this is a window-scoped
+// stopgap that becomes component-scoped state when the renderer is rewritten.
+const _EXTENSION_FIELD_DEFAULTS = {
+  archetype: 'individual_w2',
+  business_structure: null,
+  revenue_cadence: null,
+  ar_aging_buckets: null,
+  ap_pending: null,
+  payroll_periodicity: 'none',
+  payroll_amount_per_cycle: 0,
+  owner_draw_amount: 0,
+  owner_draw_cadence: 'none',
+  business_lines_of_credit: null,
+  seasonal_revenue: false,
+  seasonal_low_months: null,
+  income_sources: null,
+  income_volatility_observed: null,
+  months_of_income_history: 0,
+  tax_reserve_balance: 0,
+  tax_reserve_target_pct: 0.30,
+  quarterly_tax_due_date: null,
+  quarterly_tax_estimated_amount: 0,
+  fixed_monthly_obligations: 0,
+  freelance_account_separation: 'unknown',
+};
+let _extensionFieldCache = { ..._EXTENSION_FIELD_DEFAULTS };
+
+function _resetExtensionFieldCache() {
+  _extensionFieldCache = { ..._EXTENSION_FIELD_DEFAULTS };
+}
+
+function _populateExtensionCacheFromInput(input) {
+  // Copy every recognized extension key from the source object. Missing
+  // keys keep their defaults — important so a synthetic Individual profile
+  // doesn't accidentally write `null`s over engine-meaningful defaults.
+  if (!input || typeof input !== 'object') return;
+  for (const key of Object.keys(_EXTENSION_FIELD_DEFAULTS)) {
+    if (key in input && input[key] !== undefined) {
+      _extensionFieldCache[key] = input[key];
+    }
+  }
+}
+
 const CONF_BADGE = {
   high:    {symbol:'✓', bg:'var(--good-soft)', fg:'var(--good-ink)',
             ariaPrefix:'High confidence: from Plaid bank data'},
@@ -928,6 +993,23 @@ function prefillFormFromMap(mapped) {
     const label = input.parentElement?.querySelector('label');
     if (label && !label.querySelector('.plaid-conf-badge')) {
       label.insertAdjacentHTML('beforeend', ' ' + _confidenceBadgeHTML(mf.confidence, mf.notes));
+    }
+  }
+  // Phase 6 fix — Plaid's mapped payload also carries archetype-extension
+  // fields (income_volatility_observed, months_of_income_history,
+  // income_sources, business_lines_of_credit, ar_aging_buckets, ap_pending).
+  // Each is shaped {value, confidence, source, notes} when the mapper has
+  // a signal. Copy the `value` into the extension cache so the next
+  // computeScore() call sends it through to /api/score. Without this,
+  // FL/SB users connecting Plaid and pressing Compute degrade to Individual.
+  const EXT_MAP_FIELDS = [
+    'income_volatility_observed', 'months_of_income_history', 'income_sources',
+    'business_lines_of_credit', 'ar_aging_buckets', 'ap_pending',
+  ];
+  for (const key of EXT_MAP_FIELDS) {
+    const mf = mapped[key];
+    if (mf && mf.value !== null && mf.value !== undefined) {
+      _extensionFieldCache[key] = mf.value;
     }
   }
   // Open the relevant collapsible sections so the prefilled fields are visible.
@@ -1405,6 +1487,13 @@ async function onProfileSelect(idx){
       const el = document.getElementById(id);
       if (el) el.dataset.userEdited = 'false';
     });
+    // Phase 6 fix — reset the extension cache to defaults, then populate
+    // from the loaded profile. The reset is what makes archetype switches
+    // clean: picking Individual after Freelancer must NOT leave behind FL
+    // fields. The populate step then writes whichever extension fields
+    // this particular profile defines.
+    _resetExtensionFieldCache();
+    _populateExtensionCacheFromInput(d.input);
     document.getElementById('I_gross').value       = d.input.I_gross;
     document.getElementById('I_net').value         = d.input.I_net;
     document.getElementById('E_ess').value         = d.input.E_ess;
@@ -1541,6 +1630,13 @@ async function computeScore() {
     momentum_slope: 0.0,
     streak_days: 0,
     use_multiperiod: true,
+    // Phase 6 fix — thread archetype + extension fields from the cache.
+    // Before this, the request body stripped archetype and all FL/SB
+    // fields, silently degrading every non-Individual user to Individual
+    // scoring on Compute. The cache is populated by profile load + Plaid
+    // sync; values not populated default to Individual-W-2-safe defaults
+    // so this body is backward-compatible with the pre-fix shape.
+    ..._extensionFieldCache,
   };
 
   let url = '/api/score';
