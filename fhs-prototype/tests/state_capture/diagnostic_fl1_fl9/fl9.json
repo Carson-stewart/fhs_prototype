@@ -1,0 +1,426 @@
+{
+  "scenario": "fl9",
+  "route": "/api/score (form-submit; ScoreRequest strips archetype + FL fields)",
+  "L1_individualinput": {
+    "name": "FL Predictable \u2014 Long-term retainers, low volatility",
+    "I_gross": 8500,
+    "I_net": 6500,
+    "E_ess": 2800,
+    "E_house": 1500,
+    "D_min": 500,
+    "D_hi": 0,
+    "D_lo": 22000,
+    "S_liq": 18000,
+    "S_ret": 150000,
+    "age": 40,
+    "has_life_insurance": true,
+    "has_disability_insurance": false,
+    "overdraft_count_90d": 0,
+    "late_payment_count_90d": 0,
+    "momentum_slope": 0.3,
+    "streak_days": 120,
+    "previous": null,
+    "use_multiperiod": true,
+    "dependents": 0,
+    "retired": false,
+    "archetype": "individual_w2",
+    "business_structure": null,
+    "revenue_cadence": null,
+    "ar_aging_buckets": {},
+    "ap_pending": {},
+    "payroll_periodicity": "none",
+    "payroll_amount_per_cycle": 0,
+    "owner_draw_amount": 0,
+    "owner_draw_cadence": "none",
+    "business_lines_of_credit": [],
+    "seasonal_revenue": false,
+    "seasonal_low_months": [],
+    "income_sources": [],
+    "income_volatility_observed": null,
+    "months_of_income_history": 0,
+    "tax_reserve_balance": 0,
+    "tax_reserve_target_pct": 0.3,
+    "quarterly_tax_due_date": null,
+    "quarterly_tax_estimated_amount": 0,
+    "fixed_monthly_obligations": 0,
+    "freelance_account_separation": "unknown"
+  },
+  "L2_scoreresult": {
+    "fhs": 686,
+    "fss": 6,
+    "frs": 63,
+    "fss_breakdown_keys": [
+      "_asymmetry",
+      "EF deficit",
+      "DTI excess",
+      "HI debt burden",
+      "Savings rate deficit",
+      "Housing excess",
+      "Behavioral alerts",
+      "Debt payment shortfall",
+      "Insurance gap",
+      "Retirement gap",
+      "FVI momentum"
+    ]
+  },
+  "L3_score_to_dict": {
+    "scores": {
+      "fhs": 686,
+      "fss": 6,
+      "frs": 63,
+      "fhs_band": "Good",
+      "fss_band": "Calm",
+      "frs_band": "Improving"
+    },
+    "breakdowns": {
+      "fhs": {
+        "Emergency fund": {
+          "value": 6.4,
+          "unit": "months",
+          "score": 0.621
+        },
+        "Debt health": {
+          "DTI": 0.059,
+          "HI_burden": 0.0,
+          "shortfall": 0.0,
+          "score": 0.988
+        },
+        "Savings capacity": {
+          "value": 0.492,
+          "score": 0.9
+        },
+        "Housing": {
+          "ratio": 0.176,
+          "score": 1.0
+        },
+        "Retirement": {
+          "progress": 0.49,
+          "target": 306000.0,
+          "score": 0.392
+        },
+        "Resilience": {
+          "milestones": 3,
+          "of": 5,
+          "score": 0.6
+        },
+        "LP optimization": {
+          "objective": 3.9567,
+          "ratio": 0.887,
+          "score": 0.887
+        },
+        "_vulnerability": {
+          "flags": 1,
+          "multiplier": 0.93
+        }
+      },
+      "fss": {
+        "_asymmetry": {
+          "momentum_slope": 0.3,
+          "multiplier": 0.955
+        },
+        "EF deficit": {
+          "deficit": 0,
+          "pla": 0,
+          "contribution_pct": 0.0
+        },
+        "DTI excess": {
+          "deficit": 0,
+          "pla": 0,
+          "contribution_pct": 0.0
+        },
+        "HI debt burden": {
+          "balance": 0,
+          "pla": 0,
+          "contribution_pct": 0.0
+        },
+        "Savings rate deficit": {
+          "deficit": 0,
+          "pla": 0,
+          "contribution_pct": 0.0
+        },
+        "Housing excess": {
+          "deficit": 0,
+          "pla": 0,
+          "contribution_pct": 0.0
+        },
+        "Behavioral alerts": {
+          "count": 0,
+          "pla": 0,
+          "contribution_pct": 0.0
+        },
+        "Debt payment shortfall": {
+          "amount": 0.0,
+          "pla": 0,
+          "contribution_pct": 0.0
+        },
+        "Insurance gap": {
+          "missing_life": 0,
+          "missing_disab": 1,
+          "contribution_pct": 61.1
+        },
+        "Retirement gap": {
+          "progress": 0.49,
+          "age_factor": 0.5,
+          "contribution_pct": 38.9
+        },
+        "FVI momentum": {
+          "value": 0,
+          "pla": 0,
+          "contribution_pct": 0.0
+        }
+      },
+      "frs": {
+        "source": "multiperiod_trajectory",
+        "base": 56.0,
+        "momentum_factor": 1.32,
+        "dimensions": {
+          "debt_reduction": {
+            "closure": 0.0,
+            "contribution_pct": 0.0
+          },
+          "savings_building": {
+            "closure": 0.296,
+            "contribution_pct": 71.2
+          },
+          "milestone_achievement": {
+            "closure": 0.2,
+            "contribution_pct": 28.8
+          }
+        }
+      }
+    },
+    "optimal_allocation": {
+      "x1_ef_savings": 0.0,
+      "x2_retirement": 1925.0,
+      "x3_hi_debt_paydown": 0.0,
+      "x4_lo_debt_paydown": 0.0,
+      "x5_discretionary": 425.0,
+      "x6_investment": 850.0
+    },
+    "actual_vs_optimal": {
+      "disposable_income": 3200,
+      "milestones_achieved": {
+        "y1_ef_adequate": 1,
+        "y2_life_insurance": 1,
+        "y3_disability_insurance": 0,
+        "y4_retirement_ontrack": 1,
+        "y5_hi_debt_eliminated": 1
+      },
+      "milestones_detail": [
+        {
+          "key": "y1_ef_adequate",
+          "label": "EF adequate",
+          "achieved": true,
+          "applicability": "done",
+          "applicability_reason": null
+        },
+        {
+          "key": "y2_life_insurance",
+          "label": "Life insurance",
+          "achieved": true,
+          "applicability": "done",
+          "applicability_reason": null
+        },
+        {
+          "key": "y3_disability_insurance",
+          "label": "Disability insurance",
+          "achieved": false,
+          "applicability": "applicable",
+          "applicability_reason": null
+        },
+        {
+          "key": "y4_retirement_ontrack",
+          "label": "Retirement on track",
+          "achieved": true,
+          "applicability": "done",
+          "applicability_reason": null
+        },
+        {
+          "key": "y5_hi_debt_eliminated",
+          "label": "HI debt eliminated",
+          "achieved": true,
+          "applicability": "done",
+          "applicability_reason": null
+        }
+      ],
+      "hi_debt_remaining": 0,
+      "discretionary_excess": 0
+    },
+    "recommendations": [
+      {
+        "action": "Months 1\u20136: Redirect $1,925/month to retirement savings + $850/month to investments",
+        "impact": "FHS",
+        "priority": 1,
+        "reason": "Your personalised plan: Months 1\u20136: Redirect $1,925/month to retirement savings + $850/month to investments",
+        "phases": [
+          {
+            "months": "1\u20136",
+            "dominant": "Retirement savings",
+            "amount": 1925.0,
+            "description": "Months 1\u20136: Redirect $1,925/month to retirement savings + $850/month to investments",
+            "secondary": "Investment",
+            "secondary_amount": 850.0
+          }
+        ]
+      },
+      {
+        "action": "Add disability insurance to your benefits",
+        "impact": "FHS",
+        "priority": 3,
+        "reason": "Disability is a top cause of unplanned income loss; check whether your employer offers it."
+      },
+      {
+        "action": "Check in weekly on your spending",
+        "impact": "FRS",
+        "priority": 4,
+        "reason": "A weekly look at where your money went is the strongest predictor of momentum \u2014 a few minutes is enough."
+      },
+      {
+        "action": "Increase retirement contributions by 1% of gross income",
+        "impact": "FHS",
+        "priority": 4,
+        "reason": "Small annual escalations are the most reliable way to hit age-based wealth targets."
+      }
+    ],
+    "insights": {
+      "fhs": {
+        "Emergency fund": "You have 6.4 months saved \u2014 the sweet spot is 6 months.",
+        "Retirement": "Significantly behind \u2014 even small monthly increases compound over decades."
+      },
+      "fss": {}
+    },
+    "trajectory": [
+      686.2,
+      689.5,
+      738.9,
+      742.3,
+      745.7,
+      746.1,
+      746.5
+    ],
+    "plan": {
+      "allocation_plan": [
+        {
+          "x1_ef_savings": 0.0,
+          "x2_retirement": 1925.0,
+          "x3_hi_debt_paydown": 0.0,
+          "x4_lo_debt_paydown": 0.0,
+          "x5_discretionary": 425.0,
+          "x6_investment": 850.0
+        },
+        {
+          "x1_ef_savings": 0.0,
+          "x2_retirement": 1925.0,
+          "x3_hi_debt_paydown": 0.0,
+          "x4_lo_debt_paydown": 0.0,
+          "x5_discretionary": 425.0,
+          "x6_investment": 850.0
+        },
+        {
+          "x1_ef_savings": 0.0,
+          "x2_retirement": 1925.0,
+          "x3_hi_debt_paydown": 0.0,
+          "x4_lo_debt_paydown": 0.0,
+          "x5_discretionary": 425.0,
+          "x6_investment": 850.0
+        },
+        {
+          "x1_ef_savings": 0.0,
+          "x2_retirement": 1925.0,
+          "x3_hi_debt_paydown": 0.0,
+          "x4_lo_debt_paydown": 0.0,
+          "x5_discretionary": 425.0,
+          "x6_investment": 850.0
+        },
+        {
+          "x1_ef_savings": 0.0,
+          "x2_retirement": 1925.0,
+          "x3_hi_debt_paydown": 0.0,
+          "x4_lo_debt_paydown": 0.0,
+          "x5_discretionary": 425.0,
+          "x6_investment": 850.0
+        },
+        {
+          "x1_ef_savings": 0.0,
+          "x2_retirement": 1925.0,
+          "x3_hi_debt_paydown": 0.0,
+          "x4_lo_debt_paydown": 0.0,
+          "x5_discretionary": 425.0,
+          "x6_investment": 850.0
+        }
+      ],
+      "state_trajectory": [
+        {
+          "S_liq": 18000.0,
+          "S_ret": 151925.0,
+          "D_hi": 0.0,
+          "D_lo": 22000.0,
+          "D_min": 500.0
+        },
+        {
+          "S_liq": 18000.0,
+          "S_ret": 153850.0,
+          "D_hi": 0.0,
+          "D_lo": 22000.0,
+          "D_min": 500.0
+        },
+        {
+          "S_liq": 18000.0,
+          "S_ret": 155775.0,
+          "D_hi": 0.0,
+          "D_lo": 22000.0,
+          "D_min": 500.0
+        },
+        {
+          "S_liq": 18000.0,
+          "S_ret": 157700.0,
+          "D_hi": 0.0,
+          "D_lo": 22000.0,
+          "D_min": 500.0
+        },
+        {
+          "S_liq": 18000.0,
+          "S_ret": 159625.0,
+          "D_hi": 0.0,
+          "D_lo": 22000.0,
+          "D_min": 500.0
+        },
+        {
+          "S_liq": 18000.0,
+          "S_ret": 161550.0,
+          "D_hi": 0.0,
+          "D_lo": 22000.0,
+          "D_min": 500.0
+        }
+      ],
+      "plan_phases": [
+        {
+          "months": "1\u20136",
+          "dominant": "Retirement savings",
+          "amount": 1925.0,
+          "description": "Months 1\u20136: Redirect $1,925/month to retirement savings + $850/month to investments",
+          "secondary": "Investment",
+          "secondary_amount": 850.0
+        }
+      ]
+    },
+    "meta": {
+      "infeasible": false,
+      "infeasibility_reason": "",
+      "solver": "multiperiod",
+      "income_shortfall": null
+    }
+  },
+  "L4_visible_fss_pcts_nested": {
+    "EF deficit": 0.0,
+    "DTI excess": 0.0,
+    "HI debt burden": 0.0,
+    "Savings rate deficit": 0.0,
+    "Housing excess": 0.0,
+    "Behavioral alerts": 0.0,
+    "Debt payment shortfall": 0.0,
+    "Insurance gap": 61.1,
+    "Retirement gap": 38.9,
+    "FVI momentum": 0.0
+  }
+}

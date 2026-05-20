@@ -1,0 +1,49 @@
+{
+  "fl1_visible_pcts": {
+    "EF deficit": 0.0,
+    "DTI excess": 0.0,
+    "HI debt burden": 0.0,
+    "Savings rate deficit": 0.0,
+    "Housing excess": 0.0,
+    "Behavioral alerts": 0.0,
+    "Debt payment shortfall": 0.0,
+    "Insurance gap": 49.7,
+    "Retirement gap": 31.7,
+    "FVI momentum": 0.0,
+    "Income volatility": 18.6,
+    "Tax reserve insufficiency": 0.0,
+    "Fixed-obligation coverage": 0.0,
+    "Volatility trajectory": 0.0
+  },
+  "fl9_visible_pcts": {
+    "EF deficit": 0.0,
+    "DTI excess": 0.0,
+    "HI debt burden": 0.0,
+    "Savings rate deficit": 0.0,
+    "Housing excess": 0.0,
+    "Behavioral alerts": 0.0,
+    "Debt payment shortfall": 0.0,
+    "Insurance gap": 61.1,
+    "Retirement gap": 38.9,
+    "FVI momentum": 0.0
+  },
+  "fl1_archetype": "freelancer",
+  "fl9_archetype": "individual_w2",
+  "fl1_volatility": 0.15,
+  "fl9_volatility": null,
+  "fl1_fhs_band": 686,
+  "fl9_fhs_band": 686,
+  "input_fields_differ": [
+    "previous",
+    "archetype",
+    "business_structure",
+    "income_sources",
+    "income_volatility_observed",
+    "months_of_income_history",
+    "tax_reserve_balance",
+    "quarterly_tax_due_date",
+    "quarterly_tax_estimated_amount",
+    "fixed_monthly_obligations",
+    "freelance_account_separation"
+  ]
+}
